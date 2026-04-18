@@ -2,13 +2,35 @@ import { useEffect, useState } from 'react'
 import Kitten from '@renderer/components/Kitten'
 import VoiceButton from '@renderer/components/VoiceButton'
 import SettingsPanel from '@renderer/components/SettingsPanel'
+import TextToggle from '@renderer/components/TextToggle'
+import ChatBubbles from '@renderer/components/ChatBubbles'
 import { useConversation } from '@renderer/hooks/useConversation'
 
 type Screen = 'loading' | 'download' | 'onboarding' | 'conversation'
 
+const TEXT_ENABLED_KEY = 'echokid-text-enabled'
+
+function loadTextEnabled(): boolean {
+  try {
+    const saved = localStorage.getItem(TEXT_ENABLED_KEY)
+    return saved === 'true'
+  } catch {
+    return false
+  }
+}
+
+function saveTextEnabled(enabled: boolean): void {
+  try {
+    localStorage.setItem(TEXT_ENABLED_KEY, String(enabled))
+  } catch {
+    // ignore
+  }
+}
+
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading')
   const [statusMessage, setStatusMessage] = useState('Starting up...')
+  const [textEnabled, setTextEnabled] = useState<boolean>(loadTextEnabled)
 
   const {
     kittenState,
@@ -54,6 +76,12 @@ function App(): React.JSX.Element {
     }
   }
 
+  const handleToggleText = (): void => {
+    const next = !textEnabled
+    setTextEnabled(next)
+    saveTextEnabled(next)
+  }
+
   const showVoiceButton = mode === 'press-and-hold'
 
   return (
@@ -61,7 +89,12 @@ function App(): React.JSX.Element {
       <header className="app-header">
         <h1 className="app-title">EchoKid</h1>
         <div className="app-settings">
-          {screen === 'conversation' && <SettingsPanel mode={mode} onModeChange={setMode} />}
+          {screen === 'conversation' && (
+            <>
+              <TextToggle enabled={textEnabled} onToggle={handleToggleText} />
+              <SettingsPanel mode={mode} onModeChange={setMode} />
+            </>
+          )}
           {screen !== 'conversation' && (
             <button className="start-services-btn" onClick={handleStartServices} type="button">
               Start Services
@@ -141,6 +174,8 @@ function App(): React.JSX.Element {
                 <span className="messages-label">messages</span>
               </div>
             )}
+
+            <ChatBubbles messages={messages} visible={textEnabled} />
           </>
         )}
 

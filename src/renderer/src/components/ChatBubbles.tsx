@@ -1,0 +1,60 @@
+import { useEffect, useRef } from 'react'
+import { type ChatMessage } from '@renderer/types/conversation'
+
+interface ChatBubblesProps {
+  messages: ChatMessage[]
+  visible: boolean
+}
+
+export default function ChatBubbles({
+  messages,
+  visible
+}: ChatBubblesProps): React.JSX.Element | null {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages])
+
+  if (!visible || messages.length === 0) {
+    return null
+  }
+
+  return (
+    <div className="chat-bubbles-container" ref={scrollRef}>
+      {messages.map((msg, index) => (
+        <div
+          key={index}
+          className={`chat-bubble ${msg.role === 'user' ? 'chat-bubble-user' : 'chat-bubble-assistant'}`}
+        >
+          {msg.role === 'assistant' && (
+            <span className="chat-bubble-icon" aria-hidden="true">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                  fill="currentColor"
+                  opacity="0.3"
+                />
+                <circle cx="9" cy="10" r="1.5" fill="currentColor" />
+                <circle cx="15" cy="10" r="1.5" fill="currentColor" />
+                <path
+                  d="M12 17c-2.33 0-4.31-1.46-5.11-3.5h10.22c-.8 2.04-2.78 3.5-5.11 3.5z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+          )}
+          <div className="chat-bubble-text">{msg.text}</div>
+        </div>
+      ))}
+    </div>
+  )
+}

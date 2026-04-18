@@ -57,6 +57,7 @@ export interface UseConversationReturn {
   interrupt: () => void
   setMode: (mode: Mode) => void
   clearError: () => void
+  clearMessages: () => void
 }
 
 export function useConversation(): UseConversationReturn {
@@ -181,6 +182,13 @@ export function useConversation(): UseConversationReturn {
     setError(null)
   }, [])
 
+  const clearMessages = useCallback(() => {
+    setMessages([])
+    window.api.resetConversation().catch((err: unknown) => {
+      setError(err instanceof Error ? err.message : String(err))
+    })
+  }, [])
+
   // VAD mode: auto-restart listening after each conversation turn
   useEffect(() => {
     if (mode !== 'vad' || !servicesReady) return
@@ -207,6 +215,7 @@ export function useConversation(): UseConversationReturn {
     stopRecording,
     interrupt,
     setMode,
-    clearError
+    clearError,
+    clearMessages
   }
 }

@@ -355,6 +355,30 @@ body * {
   font-weight: 500;
 }
 
+.messages-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  padding: 0;
+  border-radius: 50%;
+  border: none;
+  background: var(--ei-c-brown-mute);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
+  transition: all 0.2s ease;
+}
+
+.messages-clear-btn:hover {
+  background: var(--ei-c-pink);
+  transform: scale(1.1);
+}
+
 /* Interrupt button */
 .interrupt-btn {
   margin-left: auto;

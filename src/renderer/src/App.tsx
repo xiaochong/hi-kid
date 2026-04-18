@@ -59,7 +59,8 @@ function App(): React.JSX.Element {
     stopRecording,
     interrupt,
     setMode,
-    clearError
+    clearError,
+    clearMessages
   } = useConversation()
 
   useEffect(() => {
@@ -236,6 +237,15 @@ function App(): React.JSX.Element {
                 <div className="messages-badge">
                   <span className="messages-count">{messages.length}</span>
                   <span className="messages-label">messages</span>
+                  <button
+                    className="messages-clear-btn"
+                    onClick={clearMessages}
+                    type="button"
+                    aria-label="Clear conversation"
+                    title="Clear conversation"
+                  >
+                    ×
+                  </button>
                 </div>
               )}
             </>

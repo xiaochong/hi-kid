@@ -8,6 +8,7 @@ interface Api {
   stopServices(): Promise<void>
   sendMessage(text: string): Promise<void>
   interrupt(): Promise<void>
+  resetConversation(): Promise<void>
   checkModels(): Promise<{ exists: boolean }>
   startDownload(): Promise<void>
   startRecording(): Promise<void>

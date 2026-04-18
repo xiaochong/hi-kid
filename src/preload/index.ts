@@ -7,6 +7,7 @@ const api = {
   stopServices: (): Promise<void> => ipcRenderer.invoke('services:stop'),
   sendMessage: (text: string): Promise<void> => ipcRenderer.invoke('agent:sendMessage', text),
   interrupt: (): Promise<void> => ipcRenderer.invoke('agent:interrupt'),
+  resetConversation: (): Promise<void> => ipcRenderer.invoke('agent:reset'),
   checkModels: (): Promise<{ exists: boolean }> => ipcRenderer.invoke('models:check'),
   startDownload: (): Promise<void> => ipcRenderer.invoke('models:download'),
   startRecording: (): Promise<void> => ipcRenderer.invoke('recorder:start'),

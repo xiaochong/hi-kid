@@ -227,6 +227,15 @@ export function registerIpcChannels(): void {
     }, 500)
   })
 
+  ipcMain.handle('agent:reset', () => {
+    stopSpeaking()
+    const agent = getAgent()
+    if (agent) {
+      agent.reset()
+    }
+    sendToRenderer('kitten:state', 'idle')
+  })
+
   ipcMain.handle('models:check', async () => {
     const downloadConfig = getDownloadConfig()
     const exists = checkModelsExist(downloadConfig)

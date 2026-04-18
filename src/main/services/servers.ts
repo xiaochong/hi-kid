@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from 'child_process'
+import { spawn, type ChildProcess, execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
 
@@ -12,22 +12,38 @@ export interface ServerConfig {
 let ttsProcess: ChildProcess | null = null
 let asrProcess: ChildProcess | null = null
 
+function findInPath(name: string): string | null {
+  try {
+    return execSync(`which ${name}`, { encoding: 'utf-8' }).trim()
+  } catch {
+    return null
+  }
+}
+
 function resolveBin(name: string): string {
+  const home = process.env.HOME || ''
   const candidates = [
     path.join(process.resourcesPath, 'bin', name),
     path.join(__dirname, '../../../../bin', name),
     path.join(__dirname, '../../../bin', name),
-    path.join(process.env.HOME || '', 'qwen3_asr_rs', name)
+    path.join(home, 'incubators', 'kitten-demo', 'bin', name),
+    path.join(home, 'incubators', 'kitten-demo', 'qwen3_asr_rs', name),
+    path.join(home, 'qwen3_asr_rs', name),
+    process.env.TTS_BIN_PATH || '',
+    process.env.ASR_BIN_PATH || ''
   ]
   for (const c of candidates) {
-    if (fs.existsSync(c)) return c
+    if (c && fs.existsSync(c)) return c
   }
+  // Fall back to PATH
+  const fromPath = findInPath(name)
+  if (fromPath) return fromPath
   return name
 }
 
-function toAbsolute(p: string): string {
-  if (path.isAbsolute(p)) return p
-  return path.resolve(__dirname, '../../../../', p)
+export function checkBinaryExists(name: string): boolean {
+  const resolved = resolveBin(name)
+  return resolved !== name || findInPath(name) !== null
 }
 
 function log(prefix: string, data: Buffer | string): void {
@@ -39,10 +55,22 @@ function log(prefix: string, data: Buffer | string): void {
 }
 
 export async function startServers(config: ServerConfig): Promise<void> {
+  // Check binaries exist before spawning
+  if (!checkBinaryExists('kitten-tts-server')) {
+    throw new Error(
+      'kitten-tts-server not found. Please build and place it in PATH, resources/bin/, or configure TTS_BIN_PATH.'
+    )
+  }
+  if (!checkBinaryExists('asr-server')) {
+    throw new Error(
+      'asr-server not found. Please build and place it in PATH, resources/bin/, or configure ASR_BIN_PATH.'
+    )
+  }
+
   const ttsBin = resolveBin('kitten-tts-server')
   const asrBin = resolveBin('asr-server')
-  const ttsModel = toAbsolute(config.ttsModelPath)
-  const asrModel = toAbsolute(config.asrModelPath)
+  const ttsModel = config.ttsModelPath
+  const asrModel = config.asrModelPath
   const env = { ...process.env, RUST_LOG: 'off' }
 
   console.log('Starting TTS server...')

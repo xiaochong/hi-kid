@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow, app } from 'electron'
+import { ipcMain, BrowserWindow } from 'electron'
 import { startServers, stopServers, asrUrl, type ServerConfig } from '../services/servers'
 import {
   createAgent,
@@ -14,11 +14,15 @@ import path from 'path'
 import os from 'os'
 
 // --- Config ---
+const MODELS_BASE_DIR = path.join(process.env.HOME || os.homedir(), '.config', 'echo-kid', 'models')
+
 const config: ServerConfig = {
   ttsPort: parseInt(process.env.TTS_PORT || '8081'),
   asrPort: parseInt(process.env.ASR_PORT || '8082'),
-  ttsModelPath: process.env.TTS_MODEL_PATH || './models/kitten-tts-nano',
-  asrModelPath: process.env.ASR_MODEL_PATH || '../qwen3_asr_rs/Qwen3-ASR-0.6B'
+  ttsModelPath:
+    process.env.TTS_MODEL_PATH || path.join(MODELS_BASE_DIR, 'kitten', 'kitten-tts-micro'),
+  asrModelPath:
+    process.env.ASR_MODEL_PATH || path.join(MODELS_BASE_DIR, 'qwen3_asr_rs', 'Qwen3-ASR-0.6B')
 }
 
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1'
@@ -34,51 +38,43 @@ let isListening = false
 let downloadInProgress = false
 
 function getDownloadConfig(): DownloadConfig {
-  const userDataPath = app.getPath('userData')
-  const modelsDir = path.join(userDataPath, 'models')
-
   // Model download URLs can be configured via environment variables
-  // If no URLs are set, the system checks local paths only
-  const ttsUrl = process.env.TTS_MODEL_DOWNLOAD_URL
-  const asrUrl = process.env.ASR_MODEL_DOWNLOAD_URL
+  const ttsUrl = process.env.TTS_MODEL_DOWNLOAD_URL || ''
+  const asrUrl = process.env.ASR_MODEL_DOWNLOAD_URL || ''
+
+  const ttsLocal = path.resolve(config.ttsModelPath)
+  const asrLocal = path.resolve(config.asrModelPath)
 
   const models: { name: string; url: string; localPath: string; size?: number; sha256?: string }[] =
     []
 
-  if (ttsUrl) {
+  if (ttsUrl && !fs.existsSync(ttsLocal)) {
     models.push({
       name: 'TTS Model',
       url: ttsUrl,
-      localPath: path.join(modelsDir, 'kitten-tts-nano', 'model.bin'),
+      localPath: ttsLocal,
       size: parseInt(process.env.TTS_MODEL_SIZE || '0', 10)
     })
   }
 
-  if (asrUrl) {
+  if (asrUrl && !fs.existsSync(asrLocal)) {
     models.push({
       name: 'ASR Model',
       url: asrUrl,
-      localPath: path.join(modelsDir, 'qwen3-asr', 'model.bin'),
+      localPath: asrLocal,
       size: parseInt(process.env.ASR_MODEL_SIZE || '0', 10)
     })
   }
 
-  // If no download URLs configured, check local paths from server config
-  if (models.length === 0) {
-    const ttsLocal = path.resolve(config.ttsModelPath)
-    const asrLocal = path.resolve(config.asrModelPath)
-
-    // For local-only mode, create pseudo-models that just check directory existence
-    return {
-      models: [
-        { name: 'TTS Local', url: '', localPath: ttsLocal },
-        { name: 'ASR Local', url: '', localPath: asrLocal }
-      ],
-      userDataPath
-    }
+  // Always include local paths for existence check, even if no download URL
+  return {
+    models: [
+      ...models,
+      { name: 'TTS Local', url: '', localPath: ttsLocal },
+      { name: 'ASR Local', url: '', localPath: asrLocal }
+    ],
+    userDataPath: MODELS_BASE_DIR
   }
-
-  return { models, userDataPath }
 }
 
 function getMainWindow(): BrowserWindow | null {
@@ -109,6 +105,18 @@ const FAIRY_TALE_ERRORS: Record<string, string> = {
 
 async function startServicesInternal(): Promise<void> {
   try {
+    // Check model directories exist before starting servers
+    if (!fs.existsSync(config.ttsModelPath)) {
+      throw new Error(
+        `TTS model not found at ${config.ttsModelPath}. Place the model there or set TTS_MODEL_DOWNLOAD_URL to download it.`
+      )
+    }
+    if (!fs.existsSync(config.asrModelPath)) {
+      throw new Error(
+        `ASR model not found at ${config.asrModelPath}. Place the model there or set ASR_MODEL_DOWNLOAD_URL to download it.`
+      )
+    }
+
     fs.mkdirSync(TMP_DIR, { recursive: true })
     await startServers(config)
     servicesReady = true

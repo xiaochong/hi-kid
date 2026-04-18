@@ -59,9 +59,12 @@ const api = {
   },
 
   onDownloadProgress: (
-    callback: (data: { bytes: number; total: number }) => void
+    callback: (data: { bytes: number; total: number; currentFile: string }) => void
   ): (() => void) => {
-    const handler = (_: unknown, data: { bytes: number; total: number }): void => callback(data)
+    const handler = (
+      _: unknown,
+      data: { bytes: number; total: number; currentFile: string }
+    ): void => callback(data)
     ipcRenderer.on('download:progress', handler)
     return (): void => {
       ipcRenderer.removeListener('download:progress', handler)

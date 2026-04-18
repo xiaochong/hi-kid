@@ -19,7 +19,9 @@ interface Api {
   onTranscription(callback: (data: { text: string }) => void): () => void
   onLlmDelta(callback: (data: { text: string }) => void): () => void
   onTtsEvent(callback: (event: 'start' | 'end') => void): () => void
-  onDownloadProgress(callback: (data: { bytes: number; total: number }) => void): () => void
+  onDownloadProgress(
+    callback: (data: { bytes: number; total: number; currentFile: string }) => void
+  ): () => void
   onError(callback: (data: { message: string }) => void): () => void
 }
 

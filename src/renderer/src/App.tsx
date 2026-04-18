@@ -4,9 +4,16 @@ import VoiceButton from '@renderer/components/VoiceButton'
 import SettingsPanel from '@renderer/components/SettingsPanel'
 import TextToggle from '@renderer/components/TextToggle'
 import ChatBubbles from '@renderer/components/ChatBubbles'
+import DownloadScreen from '@renderer/components/DownloadScreen'
 import { useConversation } from '@renderer/hooks/useConversation'
 
 type Screen = 'loading' | 'download' | 'onboarding' | 'conversation'
+
+interface DownloadProgress {
+  bytes: number
+  total: number
+  currentFile: string
+}
 
 const TEXT_ENABLED_KEY = 'echokid-text-enabled'
 
@@ -31,6 +38,11 @@ function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading')
   const [statusMessage, setStatusMessage] = useState('Starting up...')
   const [textEnabled, setTextEnabled] = useState<boolean>(loadTextEnabled)
+  const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({
+    bytes: 0,
+    total: 0,
+    currentFile: ''
+  })
 
   const {
     kittenState,
@@ -60,9 +72,35 @@ function App(): React.JSX.Element {
       setStatusMessage(`Error: ${data.message}`)
     })
 
+    const unsubscribeDownload = window.api.onDownloadProgress((progress) => {
+      setDownloadProgress(progress)
+    })
+
+    // Auto-check models on mount
+    const checkAndStart = async (): Promise<void> => {
+      try {
+        setStatusMessage('Checking models...')
+        const { exists } = await window.api.checkModels()
+        if (exists) {
+          setStatusMessage('Starting services...')
+          await window.api.startServices()
+        } else {
+          setStatusMessage('Downloading models...')
+          setScreen('download')
+          await window.api.startDownload()
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        setStatusMessage(`Startup error: ${message}`)
+      }
+    }
+
+    checkAndStart()
+
     return () => {
       unsubscribeStatus()
       unsubscribeError()
+      unsubscribeDownload()
     }
   }, [])
 
@@ -179,7 +217,15 @@ function App(): React.JSX.Element {
           </>
         )}
 
-        {(screen === 'download' || screen === 'onboarding') && <Kitten state={kittenState} />}
+        {screen === 'download' && (
+          <DownloadScreen
+            bytes={downloadProgress.bytes}
+            total={downloadProgress.total}
+            currentFile={downloadProgress.currentFile}
+          />
+        )}
+
+        {screen === 'onboarding' && <Kitten state={kittenState} />}
       </main>
 
       <footer className="status-bar">

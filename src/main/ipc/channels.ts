@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, BrowserWindow, app } from 'electron'
 import { startServers, stopServers, asrUrl, type ServerConfig } from '../services/servers'
 import {
   createAgent,
@@ -8,6 +8,7 @@ import {
   type AgentConfig
 } from '../services/agent'
 import { recordWithVad, convertAudio, analyzeAudio, MIN_VALID_RMS } from '../services/recorder'
+import { checkModelsExist, downloadModels, type DownloadConfig } from '../services/download'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -31,6 +32,54 @@ const RECORDING_FILE = path.join(TMP_DIR, 'recording.wav')
 let servicesReady = false
 let isListening = false
 let downloadInProgress = false
+
+function getDownloadConfig(): DownloadConfig {
+  const userDataPath = app.getPath('userData')
+  const modelsDir = path.join(userDataPath, 'models')
+
+  // Model download URLs can be configured via environment variables
+  // If no URLs are set, the system checks local paths only
+  const ttsUrl = process.env.TTS_MODEL_DOWNLOAD_URL
+  const asrUrl = process.env.ASR_MODEL_DOWNLOAD_URL
+
+  const models: { name: string; url: string; localPath: string; size?: number; sha256?: string }[] =
+    []
+
+  if (ttsUrl) {
+    models.push({
+      name: 'TTS Model',
+      url: ttsUrl,
+      localPath: path.join(modelsDir, 'kitten-tts-nano', 'model.bin'),
+      size: parseInt(process.env.TTS_MODEL_SIZE || '0', 10)
+    })
+  }
+
+  if (asrUrl) {
+    models.push({
+      name: 'ASR Model',
+      url: asrUrl,
+      localPath: path.join(modelsDir, 'qwen3-asr', 'model.bin'),
+      size: parseInt(process.env.ASR_MODEL_SIZE || '0', 10)
+    })
+  }
+
+  // If no download URLs configured, check local paths from server config
+  if (models.length === 0) {
+    const ttsLocal = path.resolve(config.ttsModelPath)
+    const asrLocal = path.resolve(config.asrModelPath)
+
+    // For local-only mode, create pseudo-models that just check directory existence
+    return {
+      models: [
+        { name: 'TTS Local', url: '', localPath: ttsLocal },
+        { name: 'ASR Local', url: '', localPath: asrLocal }
+      ],
+      userDataPath
+    }
+  }
+
+  return { models, userDataPath }
+}
 
 function getMainWindow(): BrowserWindow | null {
   const wins = BrowserWindow.getAllWindows()
@@ -58,26 +107,30 @@ const FAIRY_TALE_ERRORS: Record<string, string> = {
 
 // --- Invokes ---
 
+async function startServicesInternal(): Promise<void> {
+  try {
+    fs.mkdirSync(TMP_DIR, { recursive: true })
+    await startServers(config)
+    servicesReady = true
+    sendToRenderer('service:status', { ready: true })
+
+    const agentConfig: AgentConfig = {
+      baseUrl: OPENAI_BASE_URL,
+      apiKey: OPENAI_API_KEY,
+      modelName: MODEL_NAME,
+      ttsPort: config.ttsPort
+    }
+    await createAgent(agentConfig)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    sendError(`Failed to start services: ${message}`)
+    throw err
+  }
+}
+
 export function registerIpcChannels(): void {
   ipcMain.handle('services:start', async () => {
-    try {
-      fs.mkdirSync(TMP_DIR, { recursive: true })
-      await startServers(config)
-      servicesReady = true
-      sendToRenderer('service:status', { ready: true })
-
-      const agentConfig: AgentConfig = {
-        baseUrl: OPENAI_BASE_URL,
-        apiKey: OPENAI_API_KEY,
-        modelName: MODEL_NAME,
-        ttsPort: config.ttsPort
-      }
-      await createAgent(agentConfig)
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      sendError(`Failed to start services: ${message}`)
-      throw err
-    }
+    await startServicesInternal()
   })
 
   ipcMain.handle('services:stop', () => {
@@ -126,15 +179,29 @@ export function registerIpcChannels(): void {
   })
 
   ipcMain.handle('models:check', async () => {
-    // TODO: implement model existence check based on config paths
-    return { exists: true }
+    const downloadConfig = getDownloadConfig()
+    const exists = checkModelsExist(downloadConfig)
+    return { exists }
   })
 
   ipcMain.handle('models:download', async () => {
     if (downloadInProgress) return
     downloadInProgress = true
-    // TODO: implement actual download logic
-    downloadInProgress = false
+
+    try {
+      const downloadConfig = getDownloadConfig()
+      await downloadModels(downloadConfig, (progress) => {
+        sendToRenderer('download:progress', progress)
+      })
+
+      // After download completes, auto-start services
+      await startServicesInternal()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      sendError(`Download failed: ${message}`)
+    } finally {
+      downloadInProgress = false
+    }
   })
 
   // --- Recorder loop (main -> renderer push) ---

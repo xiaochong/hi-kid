@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Kitten from '@renderer/components/Kitten'
 import VoiceButton from '@renderer/components/VoiceButton'
 import SettingsPanel from '@renderer/components/SettingsPanel'
 import TextToggle from '@renderer/components/TextToggle'
 import ChatBubbles from '@renderer/components/ChatBubbles'
 import DownloadScreen from '@renderer/components/DownloadScreen'
+import OnboardingScreen from '@renderer/components/OnboardingScreen'
+import TopicSuggestions from '@renderer/components/TopicSuggestions'
 import { useConversation } from '@renderer/hooks/useConversation'
 
 type Screen = 'loading' | 'download' | 'onboarding' | 'conversation'
@@ -16,13 +18,11 @@ interface DownloadProgress {
 }
 
 const TEXT_ENABLED_KEY = 'echokid-text-enabled'
+const ONBOARDED_KEY = 'echokid-onboarded'
 
 function loadTextEnabled(): boolean {
   try {
     const saved = localStorage.getItem(TEXT_ENABLED_KEY)
-    // saved === null (first launch) → false
-    // saved === 'true' → true
-    // saved === 'false' → false
     return saved === 'true'
   } catch {
     return false
@@ -37,6 +37,22 @@ function saveTextEnabled(enabled: boolean): void {
   }
 }
 
+function hasOnboarded(): boolean {
+  try {
+    return localStorage.getItem(ONBOARDED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function markOnboarded(): void {
+  try {
+    localStorage.setItem(ONBOARDED_KEY, 'true')
+  } catch {
+    // ignore
+  }
+}
+
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading')
   const [statusMessage, setStatusMessage] = useState('Starting up...')
@@ -46,6 +62,8 @@ function App(): React.JSX.Element {
     total: 0,
     currentFile: ''
   })
+  const [topicDropdownOpen, setTopicDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const {
     kittenState,
@@ -63,11 +81,23 @@ function App(): React.JSX.Element {
     clearMessages
   } = useConversation()
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    if (!topicDropdownOpen) return
+    const handleClick = (e: MouseEvent): void => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setTopicDropdownOpen(false)
+      }
+    }
+    document.addEventListener('pointerdown', handleClick)
+    return () => document.removeEventListener('pointerdown', handleClick)
+  }, [topicDropdownOpen])
+
   useEffect(() => {
     const unsubscribeStatus = window.api.onServiceStatus((status) => {
       if (status.ready) {
         setStatusMessage('Ready!')
-        setScreen('conversation')
+        setScreen(hasOnboarded() ? 'conversation' : 'onboarding')
       } else {
         setStatusMessage('Services stopped')
       }
@@ -125,6 +155,17 @@ function App(): React.JSX.Element {
     saveTextEnabled(next)
   }
 
+  const handleCompleteOnboarding = (): void => {
+    markOnboarded()
+    setScreen('conversation')
+  }
+
+  const handleTopicClick = (topic: string): void => {
+    window.api.sendMessage(topic).catch((err: unknown) => {
+      console.error('Topic send error:', err)
+    })
+  }
+
   const showVoiceButton = mode === 'press-and-hold'
 
   const showSidebar = screen === 'conversation' && textEnabled
@@ -141,15 +182,40 @@ function App(): React.JSX.Element {
     <div className="app-shell">
       <div className="app-main">
         <header className="app-header">
-          <h1 className="app-title">EchoKid</h1>
+          <div className="app-header-left">
+            {screen === 'conversation' && (
+              <div className="topic-dropdown" ref={dropdownRef}>
+                <button
+                  className={`topic-dropdown-btn ${topicDropdownOpen ? 'open' : ''}`}
+                  onClick={() => setTopicDropdownOpen((prev) => !prev)}
+                  type="button"
+                  aria-label="Topic suggestions"
+                  title="Topic suggestions"
+                >
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                  </svg>
+                  <span>Ideas</span>
+                </button>
+                {topicDropdownOpen && (
+                  <div className="topic-dropdown-panel">
+                    <TopicSuggestions onTopicClick={(topic) => {
+                      handleTopicClick(topic)
+                      setTopicDropdownOpen(false)
+                    }} />
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           <div className="app-settings">
             {screen === 'conversation' && (
               <>
-                <TextToggle enabled={textEnabled} onToggle={handleToggleText} />
                 <SettingsPanel mode={mode} onModeChange={setMode} />
+                <TextToggle enabled={textEnabled} onToggle={handleToggleText} />
               </>
             )}
-            {screen !== 'conversation' && (
+            {(screen === 'loading' || screen === 'download') && (
               <button className="start-services-btn" onClick={handleStartServices} type="button">
                 Start Services
               </button>
@@ -259,7 +325,7 @@ function App(): React.JSX.Element {
             />
           )}
 
-          {screen === 'onboarding' && <Kitten state={kittenState} />}
+          {screen === 'onboarding' && <OnboardingScreen onStart={handleCompleteOnboarding} />}
         </main>
 
         <footer className="status-bar">

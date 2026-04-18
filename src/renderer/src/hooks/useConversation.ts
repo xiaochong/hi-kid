@@ -3,22 +3,28 @@ import { type KittenState, type ChatMessage } from '@renderer/types/conversation
 
 type Mode = 'press-and-hold' | 'vad'
 
+let audioCtx: AudioContext | null = null
+
 function playSendSound(): void {
   try {
-    const ctx = new AudioContext()
-    const osc = ctx.createOscillator()
-    const gain = ctx.createGain()
+    if (!audioCtx || audioCtx.state === 'closed') {
+      audioCtx = new AudioContext()
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume()
+    }
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
     osc.connect(gain)
-    gain.connect(ctx.destination)
+    gain.connect(audioCtx.destination)
     osc.type = 'sine'
-    osc.frequency.setValueAtTime(880, ctx.currentTime)
-    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.04)
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12)
-    gain.gain.setValueAtTime(0.25, ctx.currentTime)
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
-    osc.start(ctx.currentTime)
-    osc.stop(ctx.currentTime + 0.15)
-    setTimeout(() => ctx.close(), 250)
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.04)
+    osc.frequency.exponentialRampToValueAtTime(660, audioCtx.currentTime + 0.12)
+    gain.gain.setValueAtTime(0.25, audioCtx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15)
+    osc.start(audioCtx.currentTime)
+    osc.stop(audioCtx.currentTime + 0.15)
   } catch {
     // ignore audio errors
   }
@@ -151,10 +157,17 @@ export function useConversation(): UseConversationReturn {
 
   const startRecording = useCallback(() => {
     setIsRecording(true)
-    window.api.startRecording().catch((err: unknown) => {
-      setError(err instanceof Error ? err.message : String(err))
-      setIsRecording(false)
-    })
+    window.api
+      .startRecording()
+      .then((started) => {
+        if (!started) {
+          setIsRecording(false)
+        }
+      })
+      .catch((err: unknown) => {
+        setError(err instanceof Error ? err.message : String(err))
+        setIsRecording(false)
+      })
   }, [])
 
   const stopRecording = useCallback(() => {

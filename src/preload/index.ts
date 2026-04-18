@@ -10,7 +10,7 @@ const api = {
   resetConversation: (): Promise<void> => ipcRenderer.invoke('agent:reset'),
   checkModels: (): Promise<{ exists: boolean }> => ipcRenderer.invoke('models:check'),
   startDownload: (): Promise<void> => ipcRenderer.invoke('models:download'),
-  startRecording: (): Promise<void> => ipcRenderer.invoke('recorder:start'),
+  startRecording: (): Promise<boolean> => ipcRenderer.invoke('recorder:start'),
   stopRecording: (): Promise<void> => ipcRenderer.invoke('recorder:stop'),
 
   // -- Subscriptions (main -> renderer) --

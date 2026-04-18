@@ -11,7 +11,7 @@ interface Api {
   resetConversation(): Promise<void>
   checkModels(): Promise<{ exists: boolean }>
   startDownload(): Promise<void>
-  startRecording(): Promise<void>
+  startRecording(): Promise<boolean>
   stopRecording(): Promise<void>
 
   // Subscriptions

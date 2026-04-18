@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import styles from './VoiceButton.module.css'
 
 interface VoiceButtonProps {
@@ -13,19 +14,34 @@ export default function VoiceButton({
   onPointerUp,
   disabled = false
 }: VoiceButtonProps): React.JSX.Element {
+  const [isPressed, setIsPressed] = useState(false)
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>): void => {
+    if (disabled) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    setIsPressed(true)
+    onPointerDown()
+  }
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>): void => {
+    if (!isPressed) return
+    setIsPressed(false)
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId)
+    } catch {
+      // pointer capture may already be released
+    }
+    if (!disabled) onPointerUp()
+  }
+
   return (
     <button
       className={`${styles.voiceButton} ${isRecording ? styles.recording : ''}`}
       aria-label="Hold to speak"
-      onPointerDown={() => {
-        if (!disabled) onPointerDown()
-      }}
-      onPointerUp={() => {
-        if (!disabled) onPointerUp()
-      }}
-      onPointerLeave={() => {
-        if (isRecording && !disabled) onPointerUp()
-      }}
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerLeave={handlePointerUp}
+      onPointerCancel={handlePointerUp}
       disabled={disabled}
       type="button"
     >

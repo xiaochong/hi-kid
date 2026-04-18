@@ -38,7 +38,6 @@ const RECORDING_RAW = path.join(TMP_DIR, 'raw.wav')
 const RECORDING_FILE = path.join(TMP_DIR, 'recording.wav')
 
 let servicesReady = false
-let isListening = false
 let downloadInProgress = false
 
 function getDownloadConfig(): DownloadConfig {
@@ -127,16 +126,35 @@ function sendToRenderer(channel: string, ...args: unknown[]): void {
   }
 }
 
-function sendError(message: string): void {
+const FAIRY_TALE_ERRORS: Record<string, string> = {
+  ASR_EMPTY: 'My ears are sleepy, can you say it louder?',
+  LLM_TIMEOUT: "My brain got a little dizzy, let's try again!",
+  TTS_FAILURE: 'My voice is hiding, can you ask me something else?',
+  SERVICE_START: 'My toys are still waking up, please wait a moment!',
+  AGENT_NOT_READY: "I'm not ready yet, can you wait a little?",
+  ASR_SERVER: 'My ears are a bit confused, can you try again?',
+  DOWNLOAD_FAILED: 'Oops, something went wrong while getting my toys!',
+  NETWORK: 'The internet seems sleepy, can you try again?',
+  GENERIC: 'Oops, something unexpected happened!'
+}
+
+function sendFairyTaleError(type: string): void {
+  const message = FAIRY_TALE_ERRORS[type] ?? FAIRY_TALE_ERRORS.GENERIC
   console.error('[Error]', message)
   sendToRenderer('error', { message })
 }
 
-// Fairy-tale error messages
-const FAIRY_TALE_ERRORS: Record<string, string> = {
-  ASR_EMPTY: 'My ears are sleepy, can you say it louder?',
-  LLM_TIMEOUT: "My brain got a little dizzy, let's try again!",
-  TTS_FAILURE: 'My voice is hiding, can you ask me something else?'
+function resetRecordingState(): void {
+  sendToRenderer('transcription', { text: '' })
+  sendToRenderer('kitten:state', 'idle')
+}
+
+function getRecordingSize(path: string): number {
+  try {
+    return fs.statSync(path).size
+  } catch {
+    return 0
+  }
 }
 
 // --- Invokes ---
@@ -174,7 +192,8 @@ async function startServicesInternal(): Promise<void> {
     await createAgent(agentConfig)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    sendError(`Failed to start services: ${message}`)
+    console.error('Failed to start services:', message)
+    sendFairyTaleError('SERVICE_START')
     throw err
   }
 }
@@ -194,11 +213,11 @@ export function registerIpcChannels(): void {
   ipcMain.handle('agent:sendMessage', async (_event, text: string) => {
     const agent = getAgent()
     if (!agent) {
-      sendError('Agent not initialized. Start services first.')
+      sendFairyTaleError('AGENT_NOT_READY')
       return
     }
     if (!text || text.length < 2) {
-      sendError(FAIRY_TALE_ERRORS.ASR_EMPTY)
+      sendFairyTaleError('ASR_EMPTY')
       return
     }
 
@@ -212,7 +231,7 @@ export function registerIpcChannels(): void {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      sendError(FAIRY_TALE_ERRORS.LLM_TIMEOUT)
+      sendFairyTaleError('LLM_TIMEOUT')
       console.error('Agent prompt error:', message)
     }
   })
@@ -230,7 +249,7 @@ export function registerIpcChannels(): void {
   })
 
   ipcMain.handle('agent:reset', () => {
-    isListening = false
+    stopRecordingProcess()
     stopSpeaking()
     const agent = getAgent()
     if (agent) {
@@ -260,97 +279,101 @@ export function registerIpcChannels(): void {
       await startServicesInternal()
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      sendError(`Download failed: ${message}`)
+      console.error('Download failed:', message)
+      sendFairyTaleError('DOWNLOAD_FAILED')
     } finally {
       downloadInProgress = false
     }
   })
 
   // --- Recorder handlers ---
+  let recorderLock: Promise<void> | null = null
+
   ipcMain.handle('recorder:start', async () => {
-    if (isListening || !servicesReady) return
-    isListening = true
-    sendToRenderer('kitten:state', 'listening')
+    if (recorderLock || !servicesReady) return false
 
-    try {
-      fs.mkdirSync(TMP_DIR, { recursive: true })
-      await recordWithVad(RECORDING_RAW)
+    recorderLock = (async () => {
+        sendToRenderer('kitten:state', 'listening')
 
-      // If user stopped early (quick tap), the raw file may be empty or missing
-      if (!fs.existsSync(RECORDING_RAW) || fs.statSync(RECORDING_RAW).size < 100) {
-        isListening = false
-        sendToRenderer('transcription', { text: '' })
-        sendToRenderer('kitten:state', 'idle')
-        return
+      try {
+        await recordWithVad(RECORDING_RAW)
+
+        // If user stopped early (quick tap), the raw file may be empty or missing
+        if (getRecordingSize(RECORDING_RAW) < 100) {
+          resetRecordingState()
+          return
+        }
+
+        convertAudio(RECORDING_RAW, RECORDING_FILE)
+
+        const info = analyzeAudio(RECORDING_FILE)
+        if (info.rms < MIN_VALID_RMS || info.duration < 0.3) {
+          resetRecordingState()
+          return
+        }
+
+        // Transcribe
+        const formData = new FormData()
+        const audioBuffer = fs.readFileSync(RECORDING_FILE)
+        formData.append('file', new Blob([audioBuffer]), 'recording.wav')
+        formData.append('language', 'english')
+        formData.append('response_format', 'json')
+
+        const res = await fetch(`${asrUrl(config)}/v1/audio/transcriptions`, {
+          method: 'POST',
+          body: formData
+        })
+
+        if (!res.ok) {
+          sendFairyTaleError('ASR_SERVER')
+          resetRecordingState()
+          return
+        }
+
+        const data = (await res.json()) as { text?: string }
+        const text = (data.text || '').replace(/<\/?asr_text>/g, '').trim()
+
+        if (!text || text.length < 2) {
+          sendFairyTaleError('ASR_EMPTY')
+          resetRecordingState()
+          return
+        }
+
+        sendToRenderer('transcription', { text })
+
+        // Send to agent
+        const agent = getAgent()
+        if (!agent) {
+          sendFairyTaleError('AGENT_NOT_READY')
+          resetRecordingState()
+          return
+        }
+
+        if (getIsSpeaking() || isAgentBusy()) {
+          stopSpeaking()
+          agent.steer({ role: 'user', content: text, timestamp: Date.now() })
+        } else {
+          await agent.prompt(text)
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error('Recorder loop error:', message)
+        sendFairyTaleError('LLM_TIMEOUT')
+        resetRecordingState()
       }
+    })()
 
-      convertAudio(RECORDING_RAW, RECORDING_FILE)
-
-      const info = analyzeAudio(RECORDING_FILE)
-      if (info.rms < MIN_VALID_RMS || info.duration < 0.3) {
-        isListening = false
-        sendToRenderer('kitten:state', 'idle')
-        return
-      }
-
-      // Transcribe
-      const formData = new FormData()
-      const audioBuffer = fs.readFileSync(RECORDING_FILE)
-      formData.append('file', new Blob([audioBuffer]), 'recording.wav')
-      formData.append('language', 'english')
-      formData.append('response_format', 'json')
-
-      const res = await fetch(`${asrUrl(config)}/v1/audio/transcriptions`, {
-        method: 'POST',
-        body: formData
-      })
-
-      if (!res.ok) {
-        sendError(FAIRY_TALE_ERRORS.ASR_EMPTY)
-        isListening = false
-        sendToRenderer('kitten:state', 'idle')
-        return
-      }
-
-      const data = (await res.json()) as { text?: string }
-      const text = (data.text || '').replace(/<\/?asr_text>/g, '').trim()
-
-      if (!text || text.length < 2) {
-        sendError(FAIRY_TALE_ERRORS.ASR_EMPTY)
-        isListening = false
-        sendToRenderer('kitten:state', 'idle')
-        return
-      }
-
-      sendToRenderer('transcription', { text })
-
-      // Send to agent
-      const agent = getAgent()
-      if (!agent) {
-        sendError('Agent not initialized.')
-        isListening = false
-        sendToRenderer('kitten:state', 'idle')
-        return
-      }
-
-      if (getIsSpeaking() || isAgentBusy()) {
-        stopSpeaking()
-        agent.steer({ role: 'user', content: text, timestamp: Date.now() })
-      } else {
-        await agent.prompt(text)
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      sendError(FAIRY_TALE_ERRORS.LLM_TIMEOUT)
-      console.error('Recorder loop error:', message)
-    } finally {
-      isListening = false
-    }
+    await recorderLock
+    recorderLock = null
+    return true
   })
 
-  ipcMain.handle('recorder:stop', () => {
+  ipcMain.handle('recorder:stop', async () => {
     stopRecordingProcess()
-    isListening = false
-    sendToRenderer('kitten:state', 'idle')
+    if (recorderLock) {
+      await recorderLock
+    } else {
+      resetRecordingState()
+    }
   })
 }

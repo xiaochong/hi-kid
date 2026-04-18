@@ -32,7 +32,7 @@
 }
 
 .voiceButton:active:not(:disabled) {
-  transform: translateY(0) scale(0.96);
+  transform: translateY(-2px) scale(0.96);
 }
 
 .voiceButton:disabled {

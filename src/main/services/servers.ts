@@ -53,7 +53,34 @@ function log(prefix: string, data: Buffer | string): void {
   }
 }
 
+function isProcessAlive(proc: ChildProcess | null): boolean {
+  if (!proc || proc.pid === undefined) return false
+  try {
+    process.kill(proc.pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
 export async function startServers(config: ServerConfig): Promise<void> {
+  // If servers are already running, reuse them
+  if (isProcessAlive(ttsProcess) && isProcessAlive(asrProcess)) {
+    try {
+      const ttsRes = await fetch(`http://localhost:${config.ttsPort}/health`)
+      const asrRes = await fetch(`http://localhost:${config.asrPort}/health`)
+      if (ttsRes.ok && asrRes.ok) {
+        console.log('Servers already running, reusing existing processes')
+        return
+      }
+    } catch {
+      // fall through to restart
+    }
+  }
+
+  // Stop any lingering processes before starting fresh
+  stopServers()
+
   // Check binaries exist before spawning
   if (!checkBinaryExists('kitten-tts-server')) {
     throw new Error(

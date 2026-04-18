@@ -47,7 +47,8 @@ function createTtsStreamFn(
   baseUrl: string,
   createAssistantMessageEventStreamFn: () => ReturnType<
     typeof import('@mariozechner/pi-ai').createAssistantMessageEventStream
-  >
+  >,
+  unreachableHint: string
 ): StreamFn {
   return async (model, context, options) => {
     const stream = await baseStreamFn(model, context, options)
@@ -55,6 +56,7 @@ function createTtsStreamFn(
 
     let buffer = ''
     let ttsQueue: Promise<void> = Promise.resolve()
+    let hasStreamError = false
 
     function maybeSendIdle(): void {
       if (isConversationComplete && pendingTtsCount === 0) {
@@ -104,7 +106,10 @@ function createTtsStreamFn(
               enqueueTts(sentence)
             }
             buffer = remainder
-          } else if (event.type === 'text_end' || event.type === 'done' || event.type === 'error') {
+          } else if (event.type === 'error') {
+            hasStreamError = true
+            sendToRenderer('error', { message: unreachableHint })
+          } else if (event.type === 'text_end' || event.type === 'done') {
             if (buffer.trim()) {
               enqueueTts(buffer.trim())
               buffer = ''
@@ -114,7 +119,12 @@ function createTtsStreamFn(
         const result = await stream.result()
         await ttsQueue
         out.end(result)
-      } catch {
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error('[TTS Stream] error:', message)
+        if (!hasStreamError) {
+          sendToRenderer('error', { message: unreachableHint })
+        }
         out.end()
       }
     })().catch(() => {})
@@ -129,6 +139,7 @@ export interface AgentConfig {
   apiKey: string
   modelName: string
   ttsPort: number
+  unreachableHint?: string
 }
 
 export async function createAgent(config: AgentConfig): Promise<Agent> {
@@ -185,11 +196,6 @@ Rules:
 - If the user makes grammar mistakes, gently correct them
 - Ask follow-up questions to keep the conversation going
 - Adapt to the user's level - if they're beginner, use simpler vocabulary
-- 只能用小学三年级能懂的词汇
-- 尽可能简单和口语化
-- 尽量谈些有趣好玩的事情和用户沟通
-- 尽可能引起用户兴趣
-- 风趣幽默
 `,
       model,
       thinkingLevel: 'off',
@@ -198,7 +204,8 @@ Rules:
     streamFn: createTtsStreamFn(
       streamSimple as unknown as StreamFn,
       localTtsBaseUrl,
-      createAssistantMessageEventStream
+      createAssistantMessageEventStream,
+      config.unreachableHint ?? 'Ollama seems to be taking a nap. Make sure it is running!'
     ),
     getApiKey: async () => config.apiKey
   })

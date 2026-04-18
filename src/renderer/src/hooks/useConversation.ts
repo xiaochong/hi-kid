@@ -93,6 +93,14 @@ export function useConversation(): UseConversationReturn {
           if (last && last.role === 'assistant' && last.pending) return prev
           return [...prev, { role: 'assistant', text: '', pending: true }]
         })
+      } else if (state === 'idle') {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1]
+          if (last && last.role === 'assistant' && last.pending) {
+            return prev.slice(0, -1)
+          }
+          return prev
+        })
       }
     })
 

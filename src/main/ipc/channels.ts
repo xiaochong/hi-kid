@@ -32,6 +32,31 @@ const config: ServerConfig = {
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1'
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'ollama'
 const MODEL_NAME = process.env.MODEL_NAME || 'qwen3'
+const LLM_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS || '15000', 10)
+const LLM_UNREACHABLE_HINT = process.env.LLM_UNREACHABLE_HINT || 'Ollama seems to be taking a nap. Make sure it is running!'
+
+import { type Agent } from '@mariozechner/pi-agent-core'
+
+async function promptWithTimeout(agent: Agent, text: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('LLM_TIMEOUT'))
+    }, LLM_TIMEOUT_MS)
+
+    agent
+      .prompt(text)
+      .then(
+        () => {
+          clearTimeout(timer)
+          resolve()
+        },
+        (err: unknown) => {
+          clearTimeout(timer)
+          reject(err)
+        }
+      )
+  })
+}
 
 const TMP_DIR = path.join(os.tmpdir(), 'echo-kid')
 const RECORDING_RAW = path.join(TMP_DIR, 'raw.wav')
@@ -187,7 +212,8 @@ async function startServicesInternal(): Promise<void> {
       baseUrl: OPENAI_BASE_URL,
       apiKey: OPENAI_API_KEY,
       modelName: MODEL_NAME,
-      ttsPort: config.ttsPort
+      ttsPort: config.ttsPort,
+      unreachableHint: LLM_UNREACHABLE_HINT
     }
     await createAgent(agentConfig)
   } catch (err) {
@@ -227,12 +253,14 @@ export function registerIpcChannels(): void {
         stopSpeaking()
         agent.steer({ role: 'user', content: text, timestamp: Date.now() })
       } else {
-        await agent.prompt(text)
+        await promptWithTimeout(agent, text)
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      sendFairyTaleError('LLM_TIMEOUT')
-      console.error('Agent prompt error:', message)
+      console.error('[agent:sendMessage] error:', message)
+      // Show the configured unreachable hint for all LLM errors (timeout or connection failure)
+      sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
+      sendToRenderer('kitten:state', 'idle')
     }
   })
 
@@ -353,12 +381,13 @@ export function registerIpcChannels(): void {
           stopSpeaking()
           agent.steer({ role: 'user', content: text, timestamp: Date.now() })
         } else {
-          await agent.prompt(text)
+          await promptWithTimeout(agent, text)
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        console.error('Recorder loop error:', message)
-        sendFairyTaleError('LLM_TIMEOUT')
+        console.error('[recorder:start] error:', message)
+        // Show the configured unreachable hint for all LLM errors (timeout or connection failure)
+        sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
         resetRecordingState()
       }
     })()

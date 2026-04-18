@@ -10,11 +10,12 @@ export default function ChatBubbles({
   messages,
   visible
 }: ChatBubblesProps): React.JSX.Element | null {
-  const scrollRef = useRef<HTMLDivElement>(null)
+  const endRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    if (endRef.current) {
+      endRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' })
     }
   }, [messages])
 
@@ -23,7 +24,7 @@ export default function ChatBubbles({
   }
 
   return (
-    <div className="chat-bubbles-container" ref={scrollRef}>
+    <div className="chat-bubbles-container" ref={containerRef}>
       {messages.map((msg, index) => (
         <div
           key={index}
@@ -55,6 +56,7 @@ export default function ChatBubbles({
           <div className="chat-bubble-text">{msg.text}</div>
         </div>
       ))}
+      <div ref={endRef} />
     </div>
   )
 }

@@ -18,13 +18,21 @@ body {
 /* App shell layout */
 .app-shell {
   display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  background: var(--ei-c-cream);
+}
+
+.app-main {
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 100%;
   padding: 24px 32px 40px;
-  background: var(--ei-c-cream);
 }
 
 .app-header {
@@ -340,22 +348,43 @@ body {
   transform: translateX(16px);
 }
 
+/* Chat sidebar */
+.chat-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+  max-width: 340px;
+  height: 100%;
+  padding: 16px;
+  background: var(--ei-c-white);
+  border-left: 2px solid var(--ei-c-peach);
+  box-shadow: -4px 0 16px rgba(255, 218, 185, 0.2);
+  animation: sidebar-in 0.3s ease;
+}
+
+@keyframes sidebar-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Chat bubbles container */
 .chat-bubbles-container {
   display: flex;
   flex-direction: column;
   gap: 12px;
   width: 100%;
-  max-width: 520px;
-  max-height: 40vh;
-  padding: 16px;
+  height: 100%;
+  padding: 12px;
   overflow-y: auto;
   overflow-x: hidden;
-  border-radius: 20px;
-  background: var(--ei-c-white);
-  border: 2px solid var(--ei-c-peach);
-  box-shadow: 0 4px 16px rgba(255, 218, 185, 0.35);
-  animation: chat-in 0.3s ease;
+  border-radius: 16px;
+  background: var(--ei-c-cream);
 }
 
 @keyframes chat-in {

@@ -31,7 +31,7 @@ const config: ServerConfig = {
 
 const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1'
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'ollama'
-const MODEL_NAME = process.env.MODEL_NAME || 'qwen3'
+const MODEL_NAME = process.env.MODEL_NAME || 'qwen3:0.6b'
 const LLM_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS || '15000', 10)
 const LLM_UNREACHABLE_HINT = process.env.LLM_UNREACHABLE_HINT || 'Ollama seems to be taking a nap. Make sure it is running!'
 
@@ -386,7 +386,6 @@ export function registerIpcChannels(): void {
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         console.error('[recorder:start] error:', message)
-        // Show the configured unreachable hint for all LLM errors (timeout or connection failure)
         sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
         resetRecordingState()
       }

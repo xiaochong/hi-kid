@@ -196,6 +196,7 @@ Rules:
 - If the user makes grammar mistakes, gently correct them
 - Ask follow-up questions to keep the conversation going
 - Adapt to the user's level - if they're beginner, use simpler vocabulary
+- Absolute prohibition of emoji usage / Emojis are strictly forbidden
 `,
       model,
       thinkingLevel: 'off',

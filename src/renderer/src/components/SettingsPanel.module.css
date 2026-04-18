@@ -21,7 +21,7 @@
   background: transparent;
   color: var(--ei-c-brown-soft);
   font-family: inherit;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   transition: all 0.2s ease;
   outline: none;
 }

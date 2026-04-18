@@ -6,6 +6,11 @@ body {
   justify-content: center;
   overflow: hidden;
   user-select: none;
+  cursor: url('/cursor-icon.png') 4 0, auto;
+}
+
+body * {
+  cursor: url('/cursor-icon.png') 4 0, auto;
 }
 
 #root {
@@ -108,7 +113,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   box-shadow:
     0 4px 12px rgba(0, 0, 0, 0.1),
     0 0 0 4px rgba(168, 230, 207, 0.3);
@@ -184,7 +189,7 @@ body {
   font-family: inherit;
   font-size: 13px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -227,7 +232,7 @@ body {
   color: var(--ei-c-brown);
   font-size: 18px;
   line-height: 1;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -361,7 +366,7 @@ body {
   font-family: inherit;
   font-size: 12px;
   font-weight: 700;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
 }
@@ -386,7 +391,7 @@ body {
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
@@ -732,7 +737,7 @@ body {
   font-family: inherit;
   font-size: 13px;
   font-weight: 600;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   outline: none;
 }
 
@@ -750,7 +755,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: url('/cursor-icon.png') 4 0, pointer;
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.1),
     0 0 0 4px rgba(168, 230, 207, 0.3);

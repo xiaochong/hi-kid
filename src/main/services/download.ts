@@ -188,11 +188,20 @@ export async function downloadModels(
   config: DownloadConfig,
   onProgress: (progress: DownloadProgress) => void
 ): Promise<void> {
+  // Filter out models with no download URL (local-only checks)
+  const modelsToDownload = config.models.filter((m) => m.url)
+
+  // If nothing to download, mark as complete
+  if (modelsToDownload.length === 0) {
+    onProgress({ bytes: 1, total: 1, currentFile: 'Complete!' })
+    return
+  }
+
   let totalBytes = 0
   let downloadedBytes = 0
 
   // Calculate total size
-  for (const model of config.models) {
+  for (const model of modelsToDownload) {
     const partPath = `${model.localPath}.part`
     let downloaded = 0
     if (fs.existsSync(partPath)) {
@@ -207,12 +216,12 @@ export async function downloadModels(
   }
 
   if (totalBytes === 0) {
-    totalBytes = config.models.length // Avoid division by zero
+    totalBytes = modelsToDownload.length // Avoid division by zero
   }
 
   onProgress({ bytes: downloadedBytes, total: totalBytes, currentFile: 'Starting...' })
 
-  for (const model of config.models) {
+  for (const model of modelsToDownload) {
     if (fs.existsSync(model.localPath)) {
       continue
     }

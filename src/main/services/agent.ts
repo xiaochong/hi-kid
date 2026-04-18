@@ -1,10 +1,5 @@
 import { Agent, type AgentEvent, type StreamFn } from '@mariozechner/pi-agent-core'
-import {
-  streamSimple,
-  type Model,
-  createAssistantMessageEventStream,
-  type AssistantMessageEvent
-} from '@mariozechner/pi-ai'
+import type { Model, AssistantMessageEvent } from '@mariozechner/pi-ai'
 import { BrowserWindow } from 'electron'
 import { playSentence, stopPlayback } from './playback'
 
@@ -45,10 +40,16 @@ function extractSentences(text: string): { sentences: string[]; remainder: strin
   return { sentences, remainder: text.slice(start) }
 }
 
-function createTtsStreamFn(baseStreamFn: StreamFn, baseUrl: string): StreamFn {
+function createTtsStreamFn(
+  baseStreamFn: StreamFn,
+  baseUrl: string,
+  createAssistantMessageEventStreamFn: () => ReturnType<
+    typeof import('@mariozechner/pi-ai').createAssistantMessageEventStream
+  >
+): StreamFn {
   return async (model, context, options) => {
     const stream = await baseStreamFn(model, context, options)
-    const out = createAssistantMessageEventStream()
+    const out = createAssistantMessageEventStreamFn()
 
     let buffer = ''
     let ttsQueue: Promise<void> = Promise.resolve()
@@ -116,6 +117,11 @@ export interface AgentConfig {
 export async function createAgent(config: AgentConfig): Promise<Agent> {
   const localTtsBaseUrl = `http://localhost:${config.ttsPort}`
 
+  // Dynamically import ESM-only pi-ai module
+  const piAi = await import('@mariozechner/pi-ai')
+  const streamSimple = piAi.streamSimple
+  const createAssistantMessageEventStream = piAi.createAssistantMessageEventStream
+
   // Warm up TTS engine so first real sentence doesn't hit cold-start truncation
   try {
     await fetch(`${localTtsBaseUrl}/v1/audio/speech`, {
@@ -172,7 +178,11 @@ Rules:
       thinkingLevel: 'off',
       tools: []
     },
-    streamFn: createTtsStreamFn(streamSimple as unknown as StreamFn, localTtsBaseUrl),
+    streamFn: createTtsStreamFn(
+      streamSimple as unknown as StreamFn,
+      localTtsBaseUrl,
+      createAssistantMessageEventStream
+    ),
     getApiKey: async () => config.apiKey
   })
 

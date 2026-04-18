@@ -24,6 +24,15 @@
   transition: all 0.2s ease;
 }
 
+.kitten-mouth {
+  transform-origin: center;
+}
+
+.kitten-ears .ear-left,
+.kitten-ears .ear-right {
+  transform-origin: bottom center;
+}
+
 /* State: idle (default) */
 .state-idle .kitten-ears {
   transform: rotate(0deg);
@@ -35,7 +44,7 @@
 
 /* State: listening */
 .state-listening .kitten-ears .ear-left {
-  transform: rotate(-5deg);
+  animation: ear-perk 1.2s ease-in-out infinite;
 }
 
 .state-listening .kitten-ears .ear-right {
@@ -48,6 +57,22 @@
 
 .state-listening .kitten-mouth {
   transform: scaleY(0.6);
+}
+
+@keyframes ear-perk {
+  0%,
+  100% {
+    transform: rotate(-5deg) scale(1);
+  }
+  25% {
+    transform: rotate(-12deg) scale(1.05);
+  }
+  50% {
+    transform: rotate(-5deg) scale(1);
+  }
+  75% {
+    transform: rotate(-10deg) scale(1.03);
+  }
 }
 
 /* State: thinking */
@@ -67,17 +92,49 @@
   transform: scale(0.8);
 }
 
-/* State: speaking */
-.state-speaking .kitten-ears .ear-left {
-  transform: rotate(-3deg);
+/* State: speaking — ears stay neutral, mouth toggles o – o – */
+.state-speaking .mouth-o {
+  animation: speak-o 0.5s ease-in-out infinite;
 }
 
-.state-speaking .kitten-ears .ear-right {
-  transform: rotate(3deg);
+.state-speaking .mouth-dash {
+  animation: speak-dash 0.5s ease-in-out infinite;
 }
 
-.state-speaking .kitten-mouth {
-  transform: scaleY(1.3);
+.state-speaking .kitten-blush {
+  animation: blush-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes speak-o {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes speak-dash {
+  0%,
+  45% {
+    opacity: 0;
+  }
+  55%,
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes blush-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 0.75;
+  }
 }
 
 /* State: interrupted */

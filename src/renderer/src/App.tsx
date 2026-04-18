@@ -132,6 +132,7 @@ function App(): React.JSX.Element {
     if (isRecording) return 'Listening...'
     if (isProcessing || kittenState === 'thinking') return 'Thinking...'
     if (kittenState === 'speaking') return 'Speaking...'
+    if (mode === 'vad') return 'Listening...'
     return 'Hold to speak'
   }
 
@@ -207,14 +208,19 @@ function App(): React.JSX.Element {
                       onPointerDown={startRecording}
                       onPointerUp={stopRecording}
                       disabled={
-                        !servicesReady || isProcessing || kittenState === 'thinking' || kittenState === 'speaking'
+                        !servicesReady ||
+                        isProcessing ||
+                        kittenState === 'thinking' ||
+                        kittenState === 'speaking'
                       }
                     />
                     <span className="mic-label">{getMicLabel()}</span>
                   </>
                 ) : (
                   <div className="vad-indicator">
-                    {kittenState === 'listening' && <span className="vad-dot" />}
+                    {(kittenState === 'idle' || kittenState === 'listening') && (
+                      <span className="vad-dot" />
+                    )}
                     {(isProcessing || kittenState === 'thinking') && (
                       <span className="thinking-spinner" aria-hidden="true" />
                     )}

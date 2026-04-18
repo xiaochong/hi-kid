@@ -5,6 +5,8 @@ import { playSentence, stopPlayback } from './playback'
 
 // --- State ---
 let activeTtsCount = 0
+let pendingTtsCount = 0
+let isConversationComplete = false
 let agentInstance: Agent | null = null
 
 function getMainWindow(): BrowserWindow | null {
@@ -54,25 +56,40 @@ function createTtsStreamFn(
     let buffer = ''
     let ttsQueue: Promise<void> = Promise.resolve()
 
+    function maybeSendIdle(): void {
+      if (isConversationComplete && pendingTtsCount === 0) {
+        sendToRenderer('kitten:state', 'idle')
+      }
+    }
+
     function enqueueTts(text: string): void {
       const trimmed = text.trim()
       if (!trimmed) return
 
+      pendingTtsCount++
       // Strictly sequential fetch+play to match tts-test.ts behavior exactly
       ttsQueue = ttsQueue
         .then(async () => {
           activeTtsCount++
+          if (activeTtsCount === 1) {
+            sendToRenderer('kitten:state', 'speaking')
+          }
           sendToRenderer('tts:event', 'start')
           try {
             await playSentence(trimmed, baseUrl)
           } finally {
             activeTtsCount--
+            pendingTtsCount--
             if (activeTtsCount === 0) {
               sendToRenderer('tts:event', 'end')
             }
+            maybeSendIdle()
           }
         })
-        .catch(() => {})
+        .catch(() => {
+          pendingTtsCount--
+          maybeSendIdle()
+        })
     }
 
     ;(async () => {
@@ -190,6 +207,7 @@ Rules:
   agent.subscribe((event: AgentEvent) => {
     switch (event.type) {
       case 'agent_start':
+        isConversationComplete = false
         sendToRenderer('kitten:state', 'thinking')
         break
       case 'message_update': {
@@ -200,7 +218,10 @@ Rules:
         break
       }
       case 'agent_end': {
-        sendToRenderer('kitten:state', 'idle')
+        isConversationComplete = true
+        if (pendingTtsCount === 0) {
+          sendToRenderer('kitten:state', 'idle')
+        }
         break
       }
     }
@@ -226,4 +247,5 @@ export function getIsSpeaking(): boolean {
 export function stopSpeaking(): void {
   stopPlayback()
   activeTtsCount = 0
+  pendingTtsCount = 0
 }

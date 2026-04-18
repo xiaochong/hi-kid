@@ -76,13 +76,36 @@ export default function Kitten({ state }: KittenProps): React.JSX.Element {
 
       {/* Mouth */}
       <g className={styles['kitten-mouth']}>
-        <path
-          d="M 92 108 Q 100 115 108 108"
-          fill="none"
-          stroke="#4A3728"
-          strokeWidth="2"
-          strokeLinecap="round"
-        />
+        {state === 'speaking' ? (
+          <>
+            <circle
+              className={styles['mouth-o']}
+              cx="100"
+              cy="112"
+              r="4.5"
+              fill="#4A3728"
+            />
+            <line
+              className={styles['mouth-dash']}
+              x1="95"
+              y1="112"
+              x2="105"
+              y2="112"
+              stroke="#4A3728"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+          </>
+        ) : (
+          <path
+            className={styles['mouth-smile']}
+            d="M 92 108 Q 100 115 108 108"
+            fill="none"
+            stroke="#4A3728"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        )}
       </g>
 
       {/* Whiskers */}

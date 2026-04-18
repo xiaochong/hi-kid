@@ -74,8 +74,8 @@ export function useConversation(): UseConversationReturn {
     })
 
     const unsubscribeKittenState = window.api.onKittenState((state) => {
-      setKittenState((prev) => {
-        if ((prev === 'thinking' || prev === 'speaking') && state === 'idle') {
+      setKittenState(() => {
+        if (state !== 'listening') {
           setIsProcessing(false)
         }
         return state
@@ -162,14 +162,38 @@ export function useConversation(): UseConversationReturn {
     })
   }, [])
 
-  const setMode = useCallback((next: Mode) => {
-    setModeState(next)
-    saveMode(next)
-  }, [])
+  const setMode = useCallback(
+    (next: Mode) => {
+      if (next === mode) return
+      // Interrupt any ongoing flow in main process and reset local state
+      window.api.stopRecording().catch(() => {})
+      window.api.interrupt().catch(() => {})
+      setIsRecording(false)
+      setIsProcessing(false)
+      setKittenState('idle')
+      setModeState(next)
+      saveMode(next)
+    },
+    [mode]
+  )
 
   const clearError = useCallback(() => {
     setError(null)
   }, [])
+
+  // VAD mode: auto-restart listening after each conversation turn
+  useEffect(() => {
+    if (mode !== 'vad' || !servicesReady) return
+    if (isRecording || isProcessing || kittenState !== 'idle' || error) return
+
+    const timer = setTimeout(() => {
+      window.api.startRecording().catch((err: unknown) => {
+        console.error('VAD auto-start error:', err)
+      })
+    }, 800)
+
+    return () => clearTimeout(timer)
+  }, [mode, servicesReady, isRecording, isProcessing, kittenState, error])
 
   return {
     kittenState,

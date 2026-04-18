@@ -1,4 +1,5 @@
 import { spawn, type ChildProcess } from 'child_process'
+import { findSoxTool } from './servers'
 
 let currentPlayProcess: ChildProcess | null = null
 
@@ -20,7 +21,8 @@ export async function playSentence(text: string, baseUrl: string): Promise<void>
     return
   }
 
-  const playProcess = spawn('play', [
+  const playPath = findSoxTool('play') || 'play'
+  const playProcess = spawn(playPath, [
     '-t',
     'raw',
     '-r',

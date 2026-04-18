@@ -1,5 +1,6 @@
 import { spawn, execSync, type ChildProcess } from 'child_process'
 import fs from 'fs'
+import { findSoxTool } from './servers'
 
 // VAD: start when above threshold for 0.2s, stop when below threshold for 0.8s
 export const SILENCE_ABOVE = '1.5%'
@@ -12,8 +13,9 @@ let currentRec: ChildProcess | null = null
 
 export function recordWithVad(outputPath: string): Promise<void> {
   return new Promise((resolve) => {
+    const recPath = findSoxTool('rec') || 'rec'
     currentRec = spawn(
-      'rec',
+      recPath,
       [
         '-c',
         '1',
@@ -52,13 +54,15 @@ export function stopRecordingProcess(): void {
 }
 
 export function convertAudio(inputPath: string, outputPath: string): void {
-  execSync(`sox "${inputPath}" -r 16000 -b 16 "${outputPath}"`, { stdio: 'ignore' })
+  const soxPath = findSoxTool('sox') || 'sox'
+  execSync(`"${soxPath}" "${inputPath}" -r 16000 -b 16 "${outputPath}"`, { stdio: 'ignore' })
 }
 
 export function analyzeAudio(audioPath: string): { rms: number; size: number; duration: number } {
   try {
+    const soxPath = findSoxTool('sox') || 'sox'
     const size = fs.statSync(audioPath).size
-    const statOutput = execSync(`sox "${audioPath}" -n stat 2>&1`, { encoding: 'utf-8' })
+    const statOutput = execSync(`"${soxPath}" "${audioPath}" -n stat 2>&1`, { encoding: 'utf-8' })
     const rmsMatch = statOutput.match(/RMS\s+amplitude:\s+([\d.eE+-]+)/)
     const durMatch = statOutput.match(/Length\s+\(seconds\):\s+([\d.eE+-]+)/)
     return {

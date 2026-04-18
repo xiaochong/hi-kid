@@ -9,6 +9,8 @@ const api = {
   interrupt: (): Promise<void> => ipcRenderer.invoke('agent:interrupt'),
   checkModels: (): Promise<{ exists: boolean }> => ipcRenderer.invoke('models:check'),
   startDownload: (): Promise<void> => ipcRenderer.invoke('models:download'),
+  startRecording: (): Promise<void> => ipcRenderer.invoke('recorder:start'),
+  stopRecording: (): Promise<void> => ipcRenderer.invoke('recorder:stop'),
 
   // -- Subscriptions (main -> renderer) --
   onServiceStatus: (callback: (status: { ready: boolean }) => void): (() => void) => {

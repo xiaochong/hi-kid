@@ -146,6 +146,141 @@ body {
   background: var(--ei-c-pink);
 }
 
+/* Start services button (used before conversation screen) */
+.start-services-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 2px solid var(--ei-c-mint-soft);
+  background: var(--ei-c-mint);
+  color: var(--ei-c-brown);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.start-services-btn:hover {
+  background: var(--ei-c-mint-soft);
+}
+
+/* Error toast */
+.error-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border-radius: 14px;
+  background: var(--ei-c-pink-soft);
+  color: var(--ei-c-brown);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(255, 183, 197, 0.35);
+  animation: toast-in 0.3s ease;
+}
+
+.error-toast-text {
+  max-width: 260px;
+  line-height: 1.4;
+}
+
+.error-toast-close {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--ei-c-brown);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.error-toast-close:hover {
+  background: rgba(107, 76, 59, 0.1);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* VAD indicator */
+.vad-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vad-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ei-c-mint);
+  animation: vad-blink 1.4s ease-in-out infinite;
+}
+
+@keyframes vad-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Messages badge */
+.messages-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  background: var(--ei-c-cream);
+  border: 2px solid var(--ei-c-mint-soft);
+  color: var(--ei-c-brown-soft);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.messages-count {
+  color: var(--ei-c-brown);
+}
+
+.messages-label {
+  font-weight: 500;
+}
+
+/* Interrupt button */
+.interrupt-btn {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 2px solid var(--ei-c-pink-soft);
+  background: var(--ei-c-pink-soft);
+  color: var(--ei-c-brown);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.interrupt-btn:hover {
+  background: var(--ei-c-pink);
+}
+
 /* Utility */
 .sr-only {
   position: absolute;

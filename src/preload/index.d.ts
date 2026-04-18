@@ -10,6 +10,8 @@ interface Api {
   interrupt(): Promise<void>
   checkModels(): Promise<{ exists: boolean }>
   startDownload(): Promise<void>
+  startRecording(): Promise<void>
+  stopRecording(): Promise<void>
 
   // Subscriptions
   onServiceStatus(callback: (status: { ready: boolean }) => void): () => void

@@ -1,0 +1,46 @@
+.panel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modeButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  background: var(--ei-c-cream);
+  color: var(--ei-c-brown-soft);
+  font-family: inherit;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  outline: none;
+}
+
+.modeButton:hover {
+  background: var(--ei-c-mint-soft);
+}
+
+.modeButton.active {
+  background: var(--ei-c-mint);
+  border-color: var(--ei-c-mint-soft);
+  color: var(--ei-c-brown);
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.sub {
+  font-size: 10px;
+  font-weight: 500;
+  opacity: 0.8;
+}

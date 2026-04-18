@@ -14,7 +14,9 @@ import path from 'path'
 import os from 'os'
 
 // --- Config ---
-const MODELS_BASE_DIR = path.join(process.env.HOME || os.homedir(), '.config', 'echo-kid', 'models')
+const ECHO_KID_DIR = path.join(process.env.HOME || os.homedir(), '.config', 'echo-kid')
+const MODELS_BASE_DIR = path.join(ECHO_KID_DIR, 'models')
+const BIN_DIR = path.join(ECHO_KID_DIR, 'bin')
 
 const config: ServerConfig = {
   ttsPort: parseInt(process.env.TTS_PORT || '8081'),
@@ -41,13 +43,45 @@ function getDownloadConfig(): DownloadConfig {
   // Model download URLs can be configured via environment variables
   const ttsUrl = process.env.TTS_MODEL_DOWNLOAD_URL || ''
   const asrUrl = process.env.ASR_MODEL_DOWNLOAD_URL || ''
+  const ttsBinUrl = process.env.TTS_BIN_DOWNLOAD_URL || ''
+  const asrBinUrl = process.env.ASR_BIN_DOWNLOAD_URL || ''
 
   const ttsLocal = path.resolve(config.ttsModelPath)
   const asrLocal = path.resolve(config.asrModelPath)
+  const ttsBinLocal = path.join(BIN_DIR, 'kitten-tts-server')
+  const asrBinLocal = path.join(BIN_DIR, 'asr-server')
 
-  const models: { name: string; url: string; localPath: string; size?: number; sha256?: string }[] =
-    []
+  const models: {
+    name: string
+    url: string
+    localPath: string
+    size?: number
+    sha256?: string
+    executable?: boolean
+  }[] = []
 
+  // Binaries: download if URL configured and file missing
+  if (ttsBinUrl && !fs.existsSync(ttsBinLocal)) {
+    models.push({
+      name: 'TTS Server',
+      url: ttsBinUrl,
+      localPath: ttsBinLocal,
+      size: parseInt(process.env.TTS_BIN_SIZE || '0', 10),
+      executable: true
+    })
+  }
+
+  if (asrBinUrl && !fs.existsSync(asrBinLocal)) {
+    models.push({
+      name: 'ASR Server',
+      url: asrBinUrl,
+      localPath: asrBinLocal,
+      size: parseInt(process.env.ASR_BIN_SIZE || '0', 10),
+      executable: true
+    })
+  }
+
+  // Models: download if URL configured and directory/file missing
   if (ttsUrl && !fs.existsSync(ttsLocal)) {
     models.push({
       name: 'TTS Model',
@@ -70,10 +104,12 @@ function getDownloadConfig(): DownloadConfig {
   return {
     models: [
       ...models,
+      { name: 'TTS Bin', url: '', localPath: ttsBinLocal },
+      { name: 'ASR Bin', url: '', localPath: asrBinLocal },
       { name: 'TTS Local', url: '', localPath: ttsLocal },
       { name: 'ASR Local', url: '', localPath: asrLocal }
     ],
-    userDataPath: MODELS_BASE_DIR
+    userDataPath: ECHO_KID_DIR
   }
 }
 

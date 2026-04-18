@@ -9,6 +9,7 @@ export interface ModelFile {
   localPath: string
   size?: number
   sha256?: string
+  executable?: boolean
 }
 
 export interface DownloadConfig {
@@ -145,6 +146,9 @@ function downloadFile(
 
         try {
           fs.renameSync(partPath, model.localPath)
+          if (model.executable) {
+            fs.chmodSync(model.localPath, 0o755)
+          }
           deleteMeta(partPath)
           resolve()
         } catch (err) {

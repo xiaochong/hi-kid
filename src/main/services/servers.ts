@@ -20,15 +20,14 @@ function findInPath(name: string): string | null {
   }
 }
 
+const BIN_DIR = path.join(process.env.HOME || '', '.config', 'echo-kid', 'bin')
+
 function resolveBin(name: string): string {
-  const home = process.env.HOME || ''
   const candidates = [
+    path.join(BIN_DIR, name),
     path.join(process.resourcesPath, 'bin', name),
     path.join(__dirname, '../../../../bin', name),
     path.join(__dirname, '../../../bin', name),
-    path.join(home, 'incubators', 'kitten-demo', 'bin', name),
-    path.join(home, 'incubators', 'kitten-demo', 'qwen3_asr_rs', name),
-    path.join(home, 'qwen3_asr_rs', name),
     process.env.TTS_BIN_PATH || '',
     process.env.ASR_BIN_PATH || ''
   ]
@@ -58,12 +57,12 @@ export async function startServers(config: ServerConfig): Promise<void> {
   // Check binaries exist before spawning
   if (!checkBinaryExists('kitten-tts-server')) {
     throw new Error(
-      'kitten-tts-server not found. Please build and place it in PATH, resources/bin/, or configure TTS_BIN_PATH.'
+      'kitten-tts-server not found at ~/.config/echo-kid/bin/. Set TTS_BIN_DOWNLOAD_URL to download it, or place it manually.'
     )
   }
   if (!checkBinaryExists('asr-server')) {
     throw new Error(
-      'asr-server not found. Please build and place it in PATH, resources/bin/, or configure ASR_BIN_PATH.'
+      'asr-server not found at ~/.config/echo-kid/bin/. Set ASR_BIN_DOWNLOAD_URL to download it, or place it manually.'
     )
   }
 

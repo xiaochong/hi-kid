@@ -3,6 +3,27 @@ import { type KittenState, type ChatMessage } from '@renderer/types/conversation
 
 type Mode = 'press-and-hold' | 'vad'
 
+function playSendSound(): void {
+  try {
+    const ctx = new AudioContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.connect(gain)
+    gain.connect(ctx.destination)
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(880, ctx.currentTime)
+    osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.04)
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.12)
+    gain.gain.setValueAtTime(0.25, ctx.currentTime)
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15)
+    osc.start(ctx.currentTime)
+    osc.stop(ctx.currentTime + 0.15)
+    setTimeout(() => ctx.close(), 250)
+  } catch {
+    // ignore audio errors
+  }
+}
+
 const MODE_KEY = 'echokid-mode'
 
 function loadMode(): Mode {
@@ -26,6 +47,7 @@ function saveMode(mode: Mode): void {
 export interface UseConversationReturn {
   kittenState: KittenState
   isRecording: boolean
+  isProcessing: boolean
   messages: ChatMessage[]
   servicesReady: boolean
   error: string | null
@@ -40,6 +62,7 @@ export interface UseConversationReturn {
 export function useConversation(): UseConversationReturn {
   const [kittenState, setKittenState] = useState<KittenState>('idle')
   const [isRecording, setIsRecording] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [servicesReady, setServicesReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -51,16 +74,41 @@ export function useConversation(): UseConversationReturn {
     })
 
     const unsubscribeKittenState = window.api.onKittenState((state) => {
-      setKittenState(state)
+      setKittenState((prev) => {
+        if ((prev === 'thinking' || prev === 'speaking') && state === 'idle') {
+          setIsProcessing(false)
+        }
+        return state
+      })
+      if (state === 'thinking') {
+        setMessages((prev) => {
+          const last = prev[prev.length - 1]
+          if (last && last.role === 'assistant' && last.pending) return prev
+          return [...prev, { role: 'assistant', text: '', pending: true }]
+        })
+      }
     })
 
     const unsubscribeTranscription = window.api.onTranscription((data) => {
-      setMessages((prev) => [...prev, { role: 'user', text: data.text }])
+      setMessages((prev) => {
+        const last = prev[prev.length - 1]
+        if (last && last.role === 'user' && last.pending) {
+          const updated = [...prev]
+          updated[updated.length - 1] = { role: 'user', text: data.text }
+          return updated
+        }
+        return [...prev, { role: 'user', text: data.text }]
+      })
     })
 
     const unsubscribeLlmDelta = window.api.onLlmDelta((data) => {
       setMessages((prev) => {
         const last = prev[prev.length - 1]
+        if (last && last.role === 'assistant' && last.pending) {
+          const updated = [...prev]
+          updated[updated.length - 1] = { role: 'assistant', text: data.text }
+          return updated
+        }
         if (last && last.role === 'assistant') {
           const updated = [...prev]
           updated[updated.length - 1] = { role: 'assistant', text: last.text + data.text }
@@ -76,6 +124,7 @@ export function useConversation(): UseConversationReturn {
 
     const unsubscribeError = window.api.onError((data) => {
       setError(data.message)
+      setIsProcessing(false)
     })
 
     return () => {
@@ -98,8 +147,12 @@ export function useConversation(): UseConversationReturn {
 
   const stopRecording = useCallback(() => {
     setIsRecording(false)
+    setIsProcessing(true)
+    playSendSound()
+    setMessages((prev) => [...prev, { role: 'user', text: '', pending: true }])
     window.api.stopRecording().catch((err: unknown) => {
       setError(err instanceof Error ? err.message : String(err))
+      setIsProcessing(false)
     })
   }, [])
 
@@ -121,6 +174,7 @@ export function useConversation(): UseConversationReturn {
   return {
     kittenState,
     isRecording,
+    isProcessing,
     messages,
     servicesReady,
     error,

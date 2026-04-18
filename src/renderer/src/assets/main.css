@@ -279,6 +279,53 @@ body {
   }
 }
 
+/* Thinking spinner */
+.thinking-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ei-c-brown-mute);
+  border-top-color: var(--ei-c-mint);
+  border-radius: 50%;
+  animation: thinking-spin 0.8s linear infinite;
+}
+
+@keyframes thinking-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Speaking wave */
+.speaking-wave {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 14px;
+}
+
+.speaking-wave::before,
+.speaking-wave::after {
+  content: '';
+  width: 4px;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ei-c-mint);
+  animation: wave 0.6s ease-in-out infinite alternate;
+}
+
+.speaking-wave::after {
+  animation-delay: 0.15s;
+}
+
+@keyframes wave {
+  0% {
+    transform: scaleY(0.3);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
 /* Messages badge */
 .messages-badge {
   display: flex;
@@ -506,6 +553,73 @@ body {
 
 .chat-bubble-text {
   flex: 1;
+}
+
+/* Placeholder bubble */
+.chat-bubble-placeholder {
+  opacity: 0.7;
+  animation: bubble-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    placeholder-pulse 2s ease-in-out infinite;
+}
+
+@keyframes placeholder-pulse {
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+/* Typing dots */
+.typing-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 18px;
+}
+
+.typing-dots span {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ei-c-brown-mute);
+  animation: typing-bounce 1.4s ease-in-out infinite both;
+}
+
+.typing-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes typing-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Empty hint */
+.chat-empty-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ei-c-brown-mute);
+  opacity: 0.6;
 }
 
 /* Download screen */

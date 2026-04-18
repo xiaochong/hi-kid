@@ -3,4 +3,5 @@ export type KittenState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'inte
 export interface ChatMessage {
   role: 'user' | 'assistant'
   text: string
+  pending?: boolean
 }

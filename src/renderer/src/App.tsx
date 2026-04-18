@@ -50,6 +50,7 @@ function App(): React.JSX.Element {
   const {
     kittenState,
     isRecording,
+    isProcessing,
     messages,
     servicesReady,
     error,
@@ -127,6 +128,13 @@ function App(): React.JSX.Element {
 
   const showSidebar = screen === 'conversation' && textEnabled
 
+  function getMicLabel(): string {
+    if (isRecording) return 'Listening...'
+    if (isProcessing || kittenState === 'thinking') return 'Thinking...'
+    if (kittenState === 'speaking') return 'Speaking...'
+    return 'Hold to speak'
+  }
+
   return (
     <div className="app-shell">
       <div className="app-main">
@@ -198,16 +206,22 @@ function App(): React.JSX.Element {
                       isRecording={isRecording}
                       onPointerDown={startRecording}
                       onPointerUp={stopRecording}
-                      disabled={!servicesReady}
+                      disabled={
+                        !servicesReady || isProcessing || kittenState === 'thinking' || kittenState === 'speaking'
+                      }
                     />
-                    <span className="mic-label">
-                      {isRecording ? 'Listening...' : 'Hold to speak'}
-                    </span>
+                    <span className="mic-label">{getMicLabel()}</span>
                   </>
                 ) : (
                   <div className="vad-indicator">
-                    <span className="vad-dot" />
-                    <span className="mic-label">Listening...</span>
+                    {kittenState === 'listening' && <span className="vad-dot" />}
+                    {(isProcessing || kittenState === 'thinking') && (
+                      <span className="thinking-spinner" aria-hidden="true" />
+                    )}
+                    {kittenState === 'speaking' && (
+                      <span className="speaking-wave" aria-hidden="true" />
+                    )}
+                    <span className="mic-label">{getMicLabel()}</span>
                   </div>
                 )}
               </div>

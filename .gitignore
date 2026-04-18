@@ -8,3 +8,5 @@ out
 .vscode
 build
 .env
+resources/bin
+resources/models

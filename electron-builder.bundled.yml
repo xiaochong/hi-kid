@@ -1,0 +1,11 @@
+extends: ./electron-builder.yml
+
+extraResources:
+  - from: resources/bin
+    to: bin
+    filter:
+      - '**/*'
+  - from: resources/models
+    to: models
+    filter:
+      - '**/*'

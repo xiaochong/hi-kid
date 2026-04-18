@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "EchoKid - Your AI English Pal",
   "main": "./out/main/index.js",
-  "author": "example.com",
-  "homepage": "https://electron-vite.org",
+  "author": "xiaochong",
+  "homepage": "https://github.com/groovyquan/echo-kid",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",
@@ -18,6 +18,7 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
+    "build:mac:bundled": "node scripts/prepare-bundled.js && electron-vite build && electron-builder --mac --config electron-builder.bundled.yml",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {

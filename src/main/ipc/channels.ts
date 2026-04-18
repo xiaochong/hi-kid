@@ -248,8 +248,8 @@ export function registerIpcChannels(): void {
     }
   })
 
-  // --- Recorder loop (main -> renderer push) ---
-  ipcMain.on('recorder:start', async () => {
+  // --- Recorder handlers ---
+  ipcMain.handle('recorder:start', async () => {
     if (isListening || !servicesReady) return
     isListening = true
     sendToRenderer('kitten:state', 'listening')
@@ -321,7 +321,7 @@ export function registerIpcChannels(): void {
     }
   })
 
-  ipcMain.on('recorder:stop', () => {
+  ipcMain.handle('recorder:stop', () => {
     // VAD stops automatically; this is a no-op for now
     isListening = false
     sendToRenderer('kitten:state', 'idle')

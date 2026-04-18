@@ -7,3 +7,4 @@ out
 .idea
 .vscode
 build
+.env

@@ -2,6 +2,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .modeButton {
@@ -9,28 +15,26 @@
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 10px;
+  padding: 6px 12px;
   border-radius: 12px;
   border: 2px solid transparent;
-  background: var(--ei-c-cream);
+  background: transparent;
   color: var(--ei-c-brown-soft);
   font-family: inherit;
   cursor: pointer;
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
+  transition: all 0.2s ease;
   outline: none;
 }
 
 .modeButton:hover {
-  background: var(--ei-c-mint-soft);
+  background: rgba(168, 230, 207, 0.25);
 }
 
 .modeButton.active {
   background: var(--ei-c-mint);
-  border-color: var(--ei-c-mint-soft);
+  border-color: rgba(255, 255, 255, 0.5);
   color: var(--ei-c-brown);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .label {

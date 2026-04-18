@@ -3,29 +3,36 @@
   width: 84px;
   height: 84px;
   border-radius: 50%;
-  border: 4px solid var(--ei-c-mint-soft);
-  background: var(--ei-c-mint);
+  border: 3px solid var(--ei-c-mint);
+  background: rgba(255, 255, 255, 0.9);
   color: var(--ei-c-brown);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(168, 230, 207, 0.45);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 4px rgba(168, 230, 207, 0.3);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease,
-    opacity 0.2s ease;
+    opacity 0.2s ease,
+    background 0.2s ease;
   outline: none;
   -webkit-tap-highlight-color: transparent;
+  backdrop-filter: blur(4px);
 }
 
 .voiceButton:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(168, 230, 207, 0.55);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(168, 230, 207, 0.5);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .voiceButton:active:not(:disabled) {
-  transform: translateY(0);
+  transform: translateY(0) scale(0.96);
 }
 
 .voiceButton:disabled {
@@ -41,7 +48,11 @@
 }
 
 .recording {
+  background: rgba(255, 183, 197, 0.9);
   border-color: var(--ei-c-pink);
+  box-shadow:
+    0 4px 16px rgba(255, 183, 197, 0.4),
+    0 0 0 4px rgba(255, 183, 197, 0.3);
 }
 
 .pulse {

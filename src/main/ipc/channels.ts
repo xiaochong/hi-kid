@@ -140,6 +140,11 @@ const FAIRY_TALE_ERRORS: Record<string, string> = {
 // --- Invokes ---
 
 async function startServicesInternal(): Promise<void> {
+  if (servicesReady) {
+    sendToRenderer('service:status', { ready: true })
+    return
+  }
+
   try {
     // Check model directories exist before starting servers
     if (!fs.existsSync(config.ttsModelPath)) {

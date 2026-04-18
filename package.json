@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@mariozechner/pi-agent-core": "^0.67.68",
     "@mariozechner/pi-ai": "^0.67.68",
+    "animal-island-ui": "^0.1.0",
     "dotenv": "^17.4.2"
   },
   "devDependencies": {

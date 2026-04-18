@@ -1,34 +1,28 @@
 :root {
-  --ev-c-white: #ffffff;
-  --ev-c-white-soft: #f8f8f8;
-  --ev-c-white-mute: #f2f2f2;
+  /* Soft macaron palette */
+  --ei-c-pink: #ffb7c5;
+  --ei-c-pink-soft: #ffd1dc;
+  --ei-c-mint: #a8e6cf;
+  --ei-c-mint-soft: #d4f5e9;
+  --ei-c-yellow: #ffeaa7;
+  --ei-c-yellow-soft: #fff5d6;
+  --ei-c-blue: #a2d2ff;
+  --ei-c-blue-soft: #d0e8ff;
+  --ei-c-peach: #ffdab9;
+  --ei-c-cream: #fff5e6;
+  --ei-c-white: #ffffff;
 
-  --ev-c-black: #1b1b1f;
-  --ev-c-black-soft: #222222;
-  --ev-c-black-mute: #282828;
+  --ei-c-brown: #6b4c3b;
+  --ei-c-brown-soft: #9f8a7a;
+  --ei-c-brown-mute: #c4b5a8;
 
-  --ev-c-gray-1: #515c67;
-  --ev-c-gray-2: #414853;
-  --ev-c-gray-3: #32363f;
+  /* Animal Island UI overrides */
+  --animal-bg-color: var(--ei-c-cream);
+  --animal-text-color: var(--ei-c-brown);
 
-  --ev-c-text-1: rgba(255, 255, 245, 0.86);
-  --ev-c-text-2: rgba(235, 235, 245, 0.6);
-  --ev-c-text-3: rgba(235, 235, 245, 0.38);
-
-  --ev-button-alt-border: transparent;
-  --ev-button-alt-text: var(--ev-c-text-1);
-  --ev-button-alt-bg: var(--ev-c-gray-3);
-  --ev-button-alt-hover-border: transparent;
-  --ev-button-alt-hover-text: var(--ev-c-text-1);
-  --ev-button-alt-hover-bg: var(--ev-c-gray-2);
-}
-
-:root {
-  --color-background: var(--ev-c-black);
-  --color-background-soft: var(--ev-c-black-soft);
-  --color-background-mute: var(--ev-c-black-mute);
-
-  --color-text: var(--ev-c-text-1);
+  --color-background: var(--ei-c-cream);
+  --color-background-soft: var(--ei-c-white);
+  --color-text: var(--ei-c-brown);
 }
 
 *,
@@ -49,7 +43,8 @@ body {
   background: var(--color-background);
   line-height: 1.6;
   font-family:
-    Inter,
+    'M PLUS Rounded 1c',
+    'Noto Sans JP',
     -apple-system,
     BlinkMacSystemFont,
     'Segoe UI',

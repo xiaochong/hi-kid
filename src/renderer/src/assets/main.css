@@ -481,10 +481,8 @@ body * {
 .text-toggle {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 48px;
-  min-height: 48px;
-  padding: 8px 14px;
+  gap: 6px;
+  padding: 4px 8px;
   border-radius: 14px;
   border: 2px solid rgba(255, 255, 255, 0.4);
   background: rgba(255, 255, 255, 0.8);
@@ -504,7 +502,9 @@ body * {
 }
 
 .text-toggle-label {
-  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .text-toggle-switch {

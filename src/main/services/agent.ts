@@ -6,7 +6,7 @@ import { playSentence, stopPlayback } from './playback'
 // --- State ---
 let activeTtsCount = 0
 let pendingTtsCount = 0
-let isConversationComplete = false
+let isConversationComplete = true
 let agentInstance: Agent | null = null
 
 function getMainWindow(): BrowserWindow | null {
@@ -239,9 +239,17 @@ export function resetAgent(): void {
   agentInstance = null
 }
 
+export function resetConversationState(): void {
+  isConversationComplete = true
+}
+
 // --- State queries ---
 export function getIsSpeaking(): boolean {
   return activeTtsCount > 0
+}
+
+export function isAgentBusy(): boolean {
+  return !isConversationComplete
 }
 
 export function stopSpeaking(): void {

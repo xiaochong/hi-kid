@@ -5,6 +5,8 @@ import {
   getAgent,
   stopSpeaking,
   getIsSpeaking,
+  isAgentBusy,
+  resetConversationState,
   type AgentConfig
 } from '../services/agent'
 import { recordWithVad, convertAudio, analyzeAudio, MIN_VALID_RMS } from '../services/recorder'
@@ -202,7 +204,7 @@ export function registerIpcChannels(): void {
 
     try {
       sendToRenderer('kitten:state', 'thinking')
-      if (getIsSpeaking()) {
+      if (getIsSpeaking() || isAgentBusy()) {
         stopSpeaking()
         agent.steer({ role: 'user', content: text, timestamp: Date.now() })
       } else {
@@ -228,11 +230,13 @@ export function registerIpcChannels(): void {
   })
 
   ipcMain.handle('agent:reset', () => {
+    isListening = false
     stopSpeaking()
     const agent = getAgent()
     if (agent) {
       agent.reset()
     }
+    resetConversationState()
     sendToRenderer('kitten:state', 'idle')
   })
 
@@ -320,7 +324,7 @@ export function registerIpcChannels(): void {
         return
       }
 
-      if (getIsSpeaking()) {
+      if (getIsSpeaking() || isAgentBusy()) {
         stopSpeaking()
         agent.steer({ role: 'user', content: text, timestamp: Date.now() })
       } else {

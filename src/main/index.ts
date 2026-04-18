@@ -15,7 +15,7 @@ function cleanup(): void {
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 900,
     height: 800,
     show: false,
     autoHideMenuBar: true,

@@ -7,6 +7,11 @@ import { registerIpcChannels } from './ipc/channels'
 import { stopServers } from './services/servers'
 import { stopSpeaking } from './services/agent'
 
+function cleanup(): void {
+  stopSpeaking()
+  stopServers()
+}
+
 function createWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -65,19 +70,22 @@ app.whenReady().then(() => {
   })
 })
 
-// Clean up before quitting
-app.on('before-quit', () => {
-  stopSpeaking()
-  stopServers()
-})
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
+// Clean up on every possible exit path
+app.on('before-quit', cleanup)
+app.on('will-quit', cleanup)
 app.on('window-all-closed', () => {
-  stopSpeaking()
-  stopServers()
+  cleanup()
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Handle Ctrl+C / SIGTERM in dev mode (electron-vite HMR does not trigger before-quit)
+process.on('SIGINT', () => {
+  cleanup()
+  process.exit(0)
+})
+process.on('SIGTERM', () => {
+  cleanup()
+  process.exit(0)
 })

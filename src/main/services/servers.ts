@@ -122,16 +122,27 @@ async function waitForServer(url: string, name: string, timeoutMs = 120_000): Pr
   throw new Error(`[${name}] server did not become ready within ${timeoutMs}ms`)
 }
 
+function forceKill(proc: ChildProcess | null, name: string, timeoutMs = 800): void {
+  if (!proc || proc.killed) return
+
+  proc.kill('SIGTERM')
+
+  const timer = setTimeout(() => {
+    if (proc && !proc.killed) {
+      console.log(`[${name}] SIGTERM ignored, forcing SIGKILL`)
+      proc.kill('SIGKILL')
+    }
+  }, timeoutMs)
+
+  proc.once('exit', () => clearTimeout(timer))
+}
+
 export function stopServers(): void {
   console.log('\nStopping servers...')
-  if (ttsProcess && !ttsProcess.killed) {
-    ttsProcess.kill('SIGTERM')
-    ttsProcess = null
-  }
-  if (asrProcess && !asrProcess.killed) {
-    asrProcess.kill('SIGTERM')
-    asrProcess = null
-  }
+  forceKill(ttsProcess, 'TTS')
+  forceKill(asrProcess, 'ASR')
+  ttsProcess = null
+  asrProcess = null
 }
 
 export function ttsUrl(config: ServerConfig): string {

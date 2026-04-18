@@ -91,6 +91,17 @@ export function useConversation(): UseConversationReturn {
     })
 
     const unsubscribeTranscription = window.api.onTranscription((data) => {
+      if (!data.text) {
+        // Recording was empty or cancelled — remove pending placeholder
+        setMessages((prev) => {
+          const last = prev[prev.length - 1]
+          if (last && last.role === 'user' && last.pending) {
+            return prev.slice(0, -1)
+          }
+          return prev
+        })
+        return
+      }
       setMessages((prev) => {
         const last = prev[prev.length - 1]
         if (last && last.role === 'user' && last.pending) {

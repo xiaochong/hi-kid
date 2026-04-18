@@ -9,7 +9,7 @@ import {
   resetConversationState,
   type AgentConfig
 } from '../services/agent'
-import { recordWithVad, convertAudio, analyzeAudio, MIN_VALID_RMS } from '../services/recorder'
+import { recordWithVad, stopRecordingProcess, convertAudio, analyzeAudio, MIN_VALID_RMS } from '../services/recorder'
 import { checkModelsExist, downloadModels, type DownloadConfig } from '../services/download'
 import fs from 'fs'
 import path from 'path'
@@ -275,6 +275,15 @@ export function registerIpcChannels(): void {
     try {
       fs.mkdirSync(TMP_DIR, { recursive: true })
       await recordWithVad(RECORDING_RAW)
+
+      // If user stopped early (quick tap), the raw file may be empty or missing
+      if (!fs.existsSync(RECORDING_RAW) || fs.statSync(RECORDING_RAW).size < 100) {
+        isListening = false
+        sendToRenderer('transcription', { text: '' })
+        sendToRenderer('kitten:state', 'idle')
+        return
+      }
+
       convertAudio(RECORDING_RAW, RECORDING_FILE)
 
       const info = analyzeAudio(RECORDING_FILE)
@@ -340,7 +349,7 @@ export function registerIpcChannels(): void {
   })
 
   ipcMain.handle('recorder:stop', () => {
-    // VAD stops automatically; this is a no-op for now
+    stopRecordingProcess()
     isListening = false
     sendToRenderer('kitten:state', 'idle')
   })

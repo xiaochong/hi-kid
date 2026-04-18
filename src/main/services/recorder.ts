@@ -1,4 +1,4 @@
-import { spawn, execSync } from 'child_process'
+import { spawn, execSync, type ChildProcess } from 'child_process'
 import fs from 'fs'
 
 // VAD: start when above threshold for 0.2s, stop when below threshold for 0.8s
@@ -8,9 +8,11 @@ export const MAX_RECORD_SECONDS = 10
 export const MIN_VALID_RMS = 0.001
 export const POST_SPEECH_DELAY_MS = 500 // wait after TTS finishes before recording
 
+let currentRec: ChildProcess | null = null
+
 export function recordWithVad(outputPath: string): Promise<void> {
   return new Promise((resolve) => {
-    const rec = spawn(
+    currentRec = spawn(
       'rec',
       [
         '-c',
@@ -30,10 +32,23 @@ export function recordWithVad(outputPath: string): Promise<void> {
       { stdio: ['ignore', 'ignore', 'pipe'] }
     )
 
-    rec.stderr?.on('data', () => {}) // drain
-    rec.on('close', () => resolve())
-    rec.on('error', () => resolve())
+    currentRec.stderr?.on('data', () => {}) // drain
+    currentRec.on('close', () => {
+      currentRec = null
+      resolve()
+    })
+    currentRec.on('error', () => {
+      currentRec = null
+      resolve()
+    })
   })
+}
+
+export function stopRecordingProcess(): void {
+  if (currentRec && !currentRec.killed) {
+    currentRec.kill('SIGTERM')
+    currentRec = null
+  }
 }
 
 export function convertAudio(inputPath: string, outputPath: string): void {

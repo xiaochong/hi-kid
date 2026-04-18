@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Button } from 'animal-island-ui'
+import Kitten from '@renderer/components/Kitten'
+import { type KittenState } from '@renderer/types/conversation'
 
 type Screen = 'loading' | 'download' | 'onboarding' | 'conversation'
 
@@ -8,6 +10,7 @@ function App(): React.JSX.Element {
   const [servicesReady, setServicesReady] = useState(false)
   const [statusMessage, setStatusMessage] = useState('Starting up...')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [currentKittenState, setCurrentKittenState] = useState<KittenState>('idle')
 
   useEffect(() => {
     const unsubscribeStatus = window.api.onServiceStatus((status) => {
@@ -25,9 +28,14 @@ function App(): React.JSX.Element {
       setStatusMessage(`Error: ${data.message}`)
     })
 
+    const unsubscribeKittenState = window.api.onKittenState((state) => {
+      setCurrentKittenState(state)
+    })
+
     return () => {
       unsubscribeStatus()
       unsubscribeError()
+      unsubscribeKittenState()
     }
   }, [])
 
@@ -57,9 +65,7 @@ function App(): React.JSX.Element {
       <main className="app-stage">
         {screen === 'loading' && (
           <>
-            <div className="kitten-placeholder">
-              <span className="kitten-label">Kitten</span>
-            </div>
+            <Kitten state={currentKittenState} />
             <div className="mic-area">
               <div className="mic-button-placeholder" aria-label="Microphone button placeholder">
                 <svg
@@ -84,9 +90,7 @@ function App(): React.JSX.Element {
 
         {screen === 'conversation' && (
           <>
-            <div className="kitten-placeholder">
-              <span className="kitten-label">Kitten</span>
-            </div>
+            <Kitten state={currentKittenState} />
             <div className="mic-area">
               <button
                 className="mic-button-placeholder"
@@ -116,9 +120,7 @@ function App(): React.JSX.Element {
         )}
 
         {(screen === 'download' || screen === 'onboarding') && (
-          <div className="kitten-placeholder">
-            <span className="kitten-label">Coming soon</span>
-          </div>
+          <Kitten state={currentKittenState} />
         )}
       </main>
 

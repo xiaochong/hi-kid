@@ -122,7 +122,7 @@ function App(): React.JSX.Element {
 
   const showVoiceButton = mode === 'press-and-hold'
 
-  const showSidebar = screen === 'conversation' && textEnabled && messages.length > 0
+  const showSidebar = screen === 'conversation' && textEnabled
 
   return (
     <div className="app-shell">

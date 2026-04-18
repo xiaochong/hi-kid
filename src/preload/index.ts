@@ -1,12 +1,80 @@
-import { contextBridge } from 'electron'
+import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 
-// Custom APIs for renderer
-const api = {}
+// -- Invokes (renderer -> main) --
+const api = {
+  startServices: (): Promise<void> => ipcRenderer.invoke('services:start'),
+  stopServices: (): Promise<void> => ipcRenderer.invoke('services:stop'),
+  sendMessage: (text: string): Promise<void> => ipcRenderer.invoke('agent:sendMessage', text),
+  interrupt: (): Promise<void> => ipcRenderer.invoke('agent:interrupt'),
+  checkModels: (): Promise<{ exists: boolean }> => ipcRenderer.invoke('models:check'),
+  startDownload: (): Promise<void> => ipcRenderer.invoke('models:download'),
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+  // -- Subscriptions (main -> renderer) --
+  onServiceStatus: (callback: (status: { ready: boolean }) => void): (() => void) => {
+    const handler = (_: unknown, status: { ready: boolean }): void => callback(status)
+    ipcRenderer.on('service:status', handler)
+    return (): void => {
+      ipcRenderer.removeListener('service:status', handler)
+    }
+  },
+
+  onKittenState: (
+    callback: (state: 'idle' | 'listening' | 'thinking' | 'speaking' | 'interrupted') => void
+  ): (() => void) => {
+    const handler = (
+      _: unknown,
+      state: 'idle' | 'listening' | 'thinking' | 'speaking' | 'interrupted'
+    ): void => callback(state)
+    ipcRenderer.on('kitten:state', handler)
+    return (): void => {
+      ipcRenderer.removeListener('kitten:state', handler)
+    }
+  },
+
+  onTranscription: (callback: (data: { text: string }) => void): (() => void) => {
+    const handler = (_: unknown, data: { text: string }): void => callback(data)
+    ipcRenderer.on('transcription', handler)
+    return (): void => {
+      ipcRenderer.removeListener('transcription', handler)
+    }
+  },
+
+  onLlmDelta: (callback: (data: { text: string }) => void): (() => void) => {
+    const handler = (_: unknown, data: { text: string }): void => callback(data)
+    ipcRenderer.on('llm:delta', handler)
+    return (): void => {
+      ipcRenderer.removeListener('llm:delta', handler)
+    }
+  },
+
+  onTtsEvent: (callback: (event: 'start' | 'end') => void): (() => void) => {
+    const handler = (_: unknown, event: 'start' | 'end'): void => callback(event)
+    ipcRenderer.on('tts:event', handler)
+    return (): void => {
+      ipcRenderer.removeListener('tts:event', handler)
+    }
+  },
+
+  onDownloadProgress: (
+    callback: (data: { bytes: number; total: number }) => void
+  ): (() => void) => {
+    const handler = (_: unknown, data: { bytes: number; total: number }): void => callback(data)
+    ipcRenderer.on('download:progress', handler)
+    return (): void => {
+      ipcRenderer.removeListener('download:progress', handler)
+    }
+  },
+
+  onError: (callback: (data: { message: string }) => void): (() => void) => {
+    const handler = (_: unknown, data: { message: string }): void => callback(data)
+    ipcRenderer.on('error', handler)
+    return (): void => {
+      ipcRenderer.removeListener('error', handler)
+    }
+  }
+}
+
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)

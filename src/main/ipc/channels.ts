@@ -1,0 +1,218 @@
+import { ipcMain, BrowserWindow } from 'electron'
+import { startServers, stopServers, asrUrl, type ServerConfig } from '../services/servers'
+import {
+  createAgent,
+  getAgent,
+  stopSpeaking,
+  getIsSpeaking,
+  type AgentConfig
+} from '../services/agent'
+import { recordWithVad, convertAudio, analyzeAudio, MIN_VALID_RMS } from '../services/recorder'
+import fs from 'fs'
+import path from 'path'
+import os from 'os'
+
+// --- Config ---
+const config: ServerConfig = {
+  ttsPort: parseInt(process.env.TTS_PORT || '8081'),
+  asrPort: parseInt(process.env.ASR_PORT || '8082'),
+  ttsModelPath: process.env.TTS_MODEL_PATH || './models/kitten-tts-nano',
+  asrModelPath: process.env.ASR_MODEL_PATH || '../qwen3_asr_rs/Qwen3-ASR-0.6B'
+}
+
+const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1'
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'ollama'
+const MODEL_NAME = process.env.MODEL_NAME || 'qwen3'
+
+const TMP_DIR = path.join(os.tmpdir(), 'echo-kid')
+const RECORDING_RAW = path.join(TMP_DIR, 'raw.wav')
+const RECORDING_FILE = path.join(TMP_DIR, 'recording.wav')
+
+let servicesReady = false
+let isListening = false
+let downloadInProgress = false
+
+function getMainWindow(): BrowserWindow | null {
+  const wins = BrowserWindow.getAllWindows()
+  return wins[0] ?? null
+}
+
+function sendToRenderer(channel: string, ...args: unknown[]): void {
+  const win = getMainWindow()
+  if (win && !win.isDestroyed()) {
+    win.webContents.send(channel, ...args)
+  }
+}
+
+function sendError(message: string): void {
+  console.error('[Error]', message)
+  sendToRenderer('error', { message })
+}
+
+// Fairy-tale error messages
+const FAIRY_TALE_ERRORS: Record<string, string> = {
+  ASR_EMPTY: 'My ears are sleepy, can you say it louder?',
+  LLM_TIMEOUT: "My brain got a little dizzy, let's try again!",
+  TTS_FAILURE: 'My voice is hiding, can you ask me something else?'
+}
+
+// --- Invokes ---
+
+export function registerIpcChannels(): void {
+  ipcMain.handle('services:start', async () => {
+    try {
+      fs.mkdirSync(TMP_DIR, { recursive: true })
+      await startServers(config)
+      servicesReady = true
+      sendToRenderer('service:status', { ready: true })
+
+      const agentConfig: AgentConfig = {
+        baseUrl: OPENAI_BASE_URL,
+        apiKey: OPENAI_API_KEY,
+        modelName: MODEL_NAME,
+        ttsPort: config.ttsPort
+      }
+      await createAgent(agentConfig)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      sendError(`Failed to start services: ${message}`)
+      throw err
+    }
+  })
+
+  ipcMain.handle('services:stop', () => {
+    stopServers()
+    stopSpeaking()
+    servicesReady = false
+    sendToRenderer('service:status', { ready: false })
+  })
+
+  ipcMain.handle('agent:sendMessage', async (_event, text: string) => {
+    const agent = getAgent()
+    if (!agent) {
+      sendError('Agent not initialized. Start services first.')
+      return
+    }
+    if (!text || text.length < 2) {
+      sendError(FAIRY_TALE_ERRORS.ASR_EMPTY)
+      return
+    }
+
+    try {
+      sendToRenderer('kitten:state', 'thinking')
+      if (getIsSpeaking()) {
+        stopSpeaking()
+        agent.steer({ role: 'user', content: text, timestamp: Date.now() })
+      } else {
+        await agent.prompt(text)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      sendError(FAIRY_TALE_ERRORS.LLM_TIMEOUT)
+      console.error('Agent prompt error:', message)
+    }
+  })
+
+  ipcMain.handle('agent:interrupt', () => {
+    stopSpeaking()
+    const agent = getAgent()
+    if (agent) {
+      agent.abort()
+    }
+    sendToRenderer('kitten:state', 'interrupted')
+    setTimeout(() => {
+      sendToRenderer('kitten:state', 'idle')
+    }, 500)
+  })
+
+  ipcMain.handle('models:check', async () => {
+    // TODO: implement model existence check based on config paths
+    return { exists: true }
+  })
+
+  ipcMain.handle('models:download', async () => {
+    if (downloadInProgress) return
+    downloadInProgress = true
+    // TODO: implement actual download logic
+    downloadInProgress = false
+  })
+
+  // --- Recorder loop (main -> renderer push) ---
+  ipcMain.on('recorder:start', async () => {
+    if (isListening || !servicesReady) return
+    isListening = true
+    sendToRenderer('kitten:state', 'listening')
+
+    try {
+      fs.mkdirSync(TMP_DIR, { recursive: true })
+      await recordWithVad(RECORDING_RAW)
+      convertAudio(RECORDING_RAW, RECORDING_FILE)
+
+      const info = analyzeAudio(RECORDING_FILE)
+      if (info.rms < MIN_VALID_RMS || info.duration < 0.3) {
+        isListening = false
+        sendToRenderer('kitten:state', 'idle')
+        return
+      }
+
+      // Transcribe
+      const formData = new FormData()
+      const audioBuffer = fs.readFileSync(RECORDING_FILE)
+      formData.append('file', new Blob([audioBuffer]), 'recording.wav')
+      formData.append('language', 'english')
+      formData.append('response_format', 'json')
+
+      const res = await fetch(`${asrUrl(config)}/v1/audio/transcriptions`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!res.ok) {
+        sendError(FAIRY_TALE_ERRORS.ASR_EMPTY)
+        isListening = false
+        sendToRenderer('kitten:state', 'idle')
+        return
+      }
+
+      const data = (await res.json()) as { text?: string }
+      const text = (data.text || '').replace(/<\/?asr_text>/g, '').trim()
+
+      if (!text || text.length < 2) {
+        sendError(FAIRY_TALE_ERRORS.ASR_EMPTY)
+        isListening = false
+        sendToRenderer('kitten:state', 'idle')
+        return
+      }
+
+      sendToRenderer('transcription', { text })
+
+      // Send to agent
+      const agent = getAgent()
+      if (!agent) {
+        sendError('Agent not initialized.')
+        isListening = false
+        sendToRenderer('kitten:state', 'idle')
+        return
+      }
+
+      if (getIsSpeaking()) {
+        stopSpeaking()
+        agent.steer({ role: 'user', content: text, timestamp: Date.now() })
+      } else {
+        await agent.prompt(text)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      sendError(FAIRY_TALE_ERRORS.LLM_TIMEOUT)
+      console.error('Recorder loop error:', message)
+    } finally {
+      isListening = false
+    }
+  })
+
+  ipcMain.on('recorder:stop', () => {
+    // VAD stops automatically; this is a no-op for now
+    isListening = false
+    sendToRenderer('kitten:state', 'idle')
+  })
+}

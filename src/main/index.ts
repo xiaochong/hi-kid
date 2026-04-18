@@ -1,7 +1,10 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { registerIpcChannels } from './ipc/channels'
+import { stopServers } from './services/servers'
+import { stopSpeaking } from './services/agent'
 
 function createWindow(): void {
   // Create the browser window.
@@ -49,8 +52,8 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  // Register IPC channels
+  registerIpcChannels()
 
   createWindow()
 
@@ -61,14 +64,19 @@ app.whenReady().then(() => {
   })
 })
 
+// Clean up before quitting
+app.on('before-quit', () => {
+  stopSpeaking()
+  stopServers()
+})
+
 // Quit when all windows are closed, except on macOS. There, it's common
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on('window-all-closed', () => {
+  stopSpeaking()
+  stopServers()
   if (process.platform !== 'darwin') {
     app.quit()
   }
 })
-
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.

@@ -15,20 +15,9 @@ interface DownloadProgress {
   currentFile: string
 }
 
-const TEXT_ENABLED_KEY = 'echokid-text-enabled'
-
-function loadTextEnabled(): boolean {
-  try {
-    const saved = localStorage.getItem(TEXT_ENABLED_KEY)
-    return saved === 'true'
-  } catch {
-    return false
-  }
-}
-
 function saveTextEnabled(enabled: boolean): void {
   try {
-    localStorage.setItem(TEXT_ENABLED_KEY, String(enabled))
+    localStorage.setItem('echokid-text-enabled', String(enabled))
   } catch {
     // ignore
   }
@@ -37,7 +26,7 @@ function saveTextEnabled(enabled: boolean): void {
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading')
   const [statusMessage, setStatusMessage] = useState('Starting up...')
-  const [textEnabled, setTextEnabled] = useState<boolean>(loadTextEnabled)
+  const [textEnabled, setTextEnabled] = useState<boolean>(false)
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({
     bytes: 0,
     total: 0,

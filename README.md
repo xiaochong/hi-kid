@@ -1,3 +1,5 @@
+**English** | [简体中文](README-cn.md)
+
 # 🎈 HiKid
 
 > *Hi! I'm your AI English Pal. Let's talk!*
@@ -8,128 +10,128 @@
 
 ---
 
-## 🌟 这是什么？
+## 🌟 What is this?
 
-HiKid 是一个**完全免费、永久免费**的开源桌面应用，专为**非英语国家的小朋友**打造——帮助他们练习英语口语和听力。
+HiKid is a **completely free, forever free** open-source desktop app designed for **kids in non-English-speaking countries** to practice English speaking and listening.
 
-对着麦克风说 "Hello"，它就会用英语跟你聊天、讲故事、猜谜语——完全离线，所有数据和 AI 都在本地运行，不上传任何云端。
+Say "Hello" into the microphone, and it will chat with you in English, tell stories, and play word games — all completely offline. All data and AI run locally on your machine, nothing is uploaded to the cloud.
 
-- 🗣️ **开口就能聊** —— 不用打字，直接说话，AI 听得懂
-- 🧠 **聪明又耐心** —— 聊什么话题都可以，说得慢、说得简单也没关系
-- 🎨 **长得像动画片** —— 界面可爱，小朋友会喜欢
-- 🔒 **隐私安全** —— 对话、语音、模型，全部在本地运行
-- 🌏 **没网也能玩** —— 录音、识别、合成、对话，全走本地流水线
+- 🗣️ **Just start talking** — no typing needed, speak directly and the AI understands
+- 🧠 **Smart and patient** — talk about anything, it doesn't matter if you speak slowly or simply
+- 🎨 **Looks like a cartoon** — cute interface that kids will love
+- 🔒 **Privacy safe** — conversations, voice, and models all run locally
+- 🌏 **Works without internet** — recording, recognition, synthesis, and dialogue all run through a local pipeline
 
-> 🍎 **目前仅支持 macOS**，Windows 和 Linux 版本正在计划中，欢迎来帮忙！
+> 🍎 **Currently macOS only.** Windows and Linux versions are planned — contributions welcome!
 
 ![](resources/preview1.png)
 
 ![](resources/preview2.png)
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Requirements
 
-- macOS 12.0+（Apple Silicon / Intel）
+- macOS 12.0+ (Apple Silicon / Intel)
 - Node.js >= 20
 - npm
 
-### 安装
+### Install
 
 ```bash
-# 1. 克隆仓库
+# 1. Clone the repo
 git clone https://github.com/xiaochong/hi-kid.git
 cd hi-kid
 
-# 2. 安装依赖
+# 2. Install dependencies
 npm install
 ```
 
-### 开发
+### Development
 
 ```bash
-# 启动开发服务器（热更新）
+# Start dev server with hot reload
 npm run dev
 
-# 类型检查
+# Type check
 npm run typecheck
 
-# 代码格式化
+# Format code
 npm run format
 ```
 
-### 构建
+### Build
 
 ```bash
-# 全平台
+# All platforms
 npm run build
 
 # macOS
 npm run build:mac
 
-# 解包输出（不打包成安装包）
+# Unpacked output (no installer)
 npm run build:unpack
 ```
 
-> 详细的外部依赖安装（SoX、ASR/TTS 服务器、模型文件等）请参考 [INSTALL.md](INSTALL.md)。
+> For detailed external dependency installation (SoX, ASR/TTS servers, model files, etc.), see [INSTALL.md](INSTALL.md).
 
-## 🏗️ 技术架构
+## 🏗️ Architecture
 
-HiKid 的语音对话是一条完整的 **本地流水线**：
+HiKid's voice conversation runs through a complete **local pipeline**:
 
 ```
-用户说话 → SoX(rec) 录音 + VAD 检测 ──→ ASR 服务器 语音转文字
+User speaks → SoX(rec) recording + VAD detection ──→ ASR server speech-to-text
                                                   ↓
-SoX(play) 播放 PCM 音频 ←─ TTS 服务器 语音合成 ←─ LLM 生成回复
+SoX(play) plays PCM audio ←─ TTS server speech synthesis ←─ LLM generates reply
 ```
 
-| 组件 | 职责 |
-|------|------|
-| **SoX** | 音频录制、播放、格式转换与分析 |
-| **kitten-tts-server** | 本地语音合成 (TTS)，SSE 流式返回 PCM |
-| **asr-server** | 本地语音识别 (ASR)，基于 Qwen3-ASR-0.6B |
-| **Ollama** | 本地大语言模型，默认 `qwen3:0.6b` |
+| Component | Role |
+|-----------|------|
+| **SoX** | Audio recording, playback, format conversion, and analysis |
+| **kitten-tts-server** | Local text-to-speech (TTS), streams PCM over SSE |
+| **asr-server** | Local automatic speech recognition (ASR), based on Qwen3-ASR-0.6B |
+| **Ollama** | Local large language model, default `qwen3:0.6b` |
 
-项目结构：
+Project structure:
 
 ```
 src/
-├── main/          # Electron 主进程
-├── preload/       # 预加载脚本（IPC 桥接）
-└── renderer/      # React 渲染进程
+├── main/          # Electron main process
+├── preload/       # Preload scripts (IPC bridge)
+└── renderer/      # React renderer process
 ```
 
-## 🤝 贡献指南
+## 🤝 Contributing
 
-欢迎提交 Issue 和 PR！
+Issues and PRs are welcome!
 
-- `dev` 分支是活跃开发分支
-- `main` 分支是稳定分支，用于合并 PR
-- 提交前请运行 `npm run lint` 和 `npm run typecheck`
+- `dev` is the active development branch
+- `main` is the stable branch for merging PRs
+- Please run `npm run lint` and `npm run typecheck` before submitting
 
-## 🙏 致谢
+## 🙏 Acknowledgments
 
-HiKid 站在巨人的肩膀上：
+HiKid stands on the shoulders of giants:
 
-| 项目 | 用途 |
-|------|------|
-| [Electron](https://www.electronjs.org/) | 跨平台桌面应用框架 |
-| [React](https://react.dev/) | 用户界面构建 |
-| [Vite](https://vitejs.dev/) | 极速构建工具 |
-| [@mariozechner/pi-agent-core](https://www.npmjs.com/package/@mariozechner/pi-agent-core) | Agent 编排与事件流框架 |
-| [kitten-tts-server](https://github.com/second-state/kitten_tts_rs) | 本地语音合成引擎 |
-| [Qwen3-ASR-0.6B](https://github.com/QwenLM/Qwen3) | 本地语音识别模型 |
-| [Ollama](https://ollama.com/) | 本地大语言模型运行环境 |
-| [animal-island-ui](https://github.com/guokaigdg/animal-island-ui) | 可爱的 UI 组件 |
+| Project | Purpose |
+|---------|---------|
+| [Electron](https://www.electronjs.org/) | Cross-platform desktop app framework |
+| [React](https://react.dev/) | UI building |
+| [Vite](https://vitejs.dev/) | Fast build tool |
+| [@mariozechner/pi-agent-core](https://www.npmjs.com/package/@mariozechner/pi-agent-core) | Agent orchestration and event streaming framework |
+| [kitten-tts-server](https://github.com/second-state/kitten_tts_rs) | Local speech synthesis engine |
+| [Qwen3-ASR-0.6B](https://github.com/QwenLM/Qwen3) | Local speech recognition model |
+| [Ollama](https://ollama.com/) | Local LLM runtime |
+| [animal-island-ui](https://github.com/guokaigdg/animal-island-ui) | Cute UI components |
 
-以及所有间接依赖它们的开发者们——是你们让开源世界如此精彩！
+And to all the developers who indirectly depend on them — thank you for making the open-source world so wonderful!
 
-## ⚠️ 声明
+## ⚠️ Disclaimer
 
-- 本项目仅用于个人学习、研究与非商业展示，禁止任何形式的商业使用、二次售卖或盈利行为。
-- 本项目使用的 UI 组件库 [animal-island-ui](https://github.com/guokaigdg/animal-island-ui)，界面设计灵感参考了经典游戏风格，但所有素材和风格仅为设计参考，不构成对原作品的复制或侵权。
+- This project is for personal learning, research, and non-commercial demonstration only. Commercial use, resale, or profit-making in any form is prohibited.
+- The UI component library [animal-island-ui](https://github.com/guokaigdg/animal-island-ui) used by this project draws visual design inspiration from classic game styles, but all materials and styles are for design reference only and do not constitute copying or infringement of the original works.
 
-## 📄 许可证
+## 📄 License
 
 MIT
 

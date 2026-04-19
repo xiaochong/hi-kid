@@ -1,52 +1,54 @@
-# HiKid 安装指南
+**English** | [简体中文](INSTALL-cn.md)
 
-## 系统要求
+# HiKid Installation Guide
+
+## System Requirements
 
 - **macOS** 12.0+ (Apple Silicon / ARM64)
-- **RAM**: 8GB+ (推荐 16GB)
-- **存储**: 最小包 ~200MB，全量包 ~2GB
+- **RAM**: 8GB+ (16GB recommended)
+- **Storage**: Minimal package ~200MB, full package ~2GB
 
-## 首次运行（重要）
+## First Launch (Important)
 
-由于 HiKid 未通过 Apple 官方签名，首次打开时 macOS 可能会阻止运行。
+Since HiKid is not signed by Apple, macOS may block it on first open.
 
-**解决方法**（任选一种）：
+**Workarounds** (pick one):
 
-**方法 1：终端命令（推荐）**
+**Method 1: Terminal command (recommended)**
 
 ```bash
 xattr -cr /Applications/HiKid.app
 ```
 
-**方法 2：手动允许**
+**Method 2: Manually allow**
 
-1. 将 `HiKid.app` 拖入 Applications
-2. **右键**点击应用图标，选择"打开"
-3. 在弹出的对话框中点击"打开"
-4. 如果仍被阻止，前往 **系统设置 > 隐私与安全性**，找到 HiKid 并点击"仍要打开"
+1. Drag `HiKid.app` into Applications
+2. **Right-click** the app icon and choose "Open"
+3. Click "Open" in the dialog that appears
+4. If still blocked, go to **System Settings > Privacy & Security**, find HiKid, and click "Open Anyway"
 
-**方法 3：按住 Control 键打开**
+**Method 3: Control-click to open**
 
-按住 `Control` 键，同时点击应用图标，选择"打开"
+Hold the `Control` key and click the app icon, then choose "Open"
 
 ---
 
-## 方案一：最小安装包（推荐开发者）
+## Option 1: Minimal Package (Recommended for Developers)
 
-应用体积最小，但需要手动安装依赖。
+Smallest app size, but requires manual dependency installation.
 
-### 1. 安装 SoX（音频工具）
+### 1. Install SoX (audio tools)
 
 ```bash
 brew install sox
 ```
 
-### 2. 安装 TTS / ASR 服务器二进制
+### 2. Install TTS / ASR server binaries
 
 ```bash
 mkdir -p ~/.config/hi-kid/bin && cd ~/.config/hi-kid
 
-# TTS 服务器（macOS ARM64）
+# TTS server (macOS ARM64)
 curl -LO https://github.com/second-state/kitten_tts_rs/releases/latest/download/kitten-tts-aarch64-macos.tar.gz
 tar xzf kitten-tts-aarch64-macos.tar.gz
 mv kitten-tts-aarch64-macos/kitten-tts-server bin/
@@ -54,54 +56,54 @@ chmod +x bin/kitten-tts-server
 rm kitten-tts-aarch64-macos.tar.gz
 rmdir kitten-tts-aarch64-macos
 
-# ASR 服务器（macOS ARM64）
+# ASR server (macOS ARM64)
 curl -sSf https://raw.githubusercontent.com/second-state/qwen3_asr_rs/main/install.sh | bash
 mv qwen3_asr_rs/asr-server bin/
 chmod +x bin/asr-server
 ```
 
-### 3. 下载模型文件
+### 3. Download model files
 
 ```bash
 cd ~/.config/hi-kid
 
-# TTS 模型
+# TTS model
 curl -LO https://github.com/second-state/kitten_tts_rs/releases/latest/download/kitten-tts-models.tar.gz
 tar xzf kitten-tts-models.tar.gz
 rm kitten-tts-models.tar.gz
 
-# ASR 模型（已包含在 install.sh 安装目录中）
-# install.sh 执行后模型位于 ./qwen3_asr_rs/Qwen3-ASR-0.6B/
+# ASR model (already included in the install.sh directory)
+# After install.sh runs, models are at ./qwen3_asr_rs/Qwen3-ASR-0.6B/
 ```
 
-### 4. 运行 HiKid
+### 4. Run HiKid
 
-将 `HiKid.app` 拖入 Applications 文件夹即可使用。
-
----
-
-## 方案二：全量安装包（推荐普通用户）
-
-开箱即用，无需手动下载任何依赖。
-
-### 步骤
-
-1. 下载 `HiKid-x.x.x.dmg`
-2. 打开 DMG，将 `HiKid.app` 拖入 Applications 文件夹
-3. 首次启动时前往 **系统设置 > 隐私与安全性 > 麦克风**，允许 HiKid 访问麦克风
-4. 双击启动，开始和 Kitten 对话！
+Drag `HiKid.app` into your Applications folder and launch.
 
 ---
 
-## 启动 LLM 后端
+## Option 2: Full Package (Recommended for Regular Users)
 
-HiKid 默认连接本地的 Ollama 服务：
+Works out of the box, no manual downloads needed.
+
+### Steps
+
+1. Download `HiKid-x.x.x.dmg`
+2. Open the DMG and drag `HiKid.app` into Applications
+3. On first launch, go to **System Settings > Privacy & Security > Microphone** and allow HiKid microphone access
+4. Double-click to launch and start talking to Kitten!
+
+---
+
+## Start the LLM Backend
+
+HiKid connects to a local Ollama service by default:
 
 ```bash
 ollama run qwen3
 ```
 
-如果使用其他 LLM 后端，设置环境变量：
+If using a different LLM backend, set environment variables:
 
 ```bash
 export OPENAI_BASE_URL="http://localhost:11434/v1"
@@ -111,11 +113,11 @@ export MODEL_NAME="qwen3"
 
 ---
 
-## 故障排查
+## Troubleshooting
 
 ### "Missing required audio tools: rec, sox, play"
 
-SoX 未安装。运行：
+SoX is not installed. Run:
 
 ```bash
 brew install sox
@@ -123,12 +125,12 @@ brew install sox
 
 ### "kitten-tts-server not found"
 
-TTS 服务器二进制文件缺失。按方案一第 2 步安装。
+The TTS server binary is missing. Install it following Option 1 Step 2.
 
 ### "ASR model not found"
 
-模型文件缺失。按方案一第 3 步下载模型，或启动应用后使用内置下载功能。
+Model files are missing. Download them following Option 1 Step 3, or use the built-in download feature after launching the app.
 
-### 麦克风无响应
+### Microphone not responding
 
-前往 **系统设置 > 隐私与安全性 > 麦克风**，确保 HiKid 已授权。
+Go to **System Settings > Privacy & Security > Microphone** and make sure HiKid is authorized.

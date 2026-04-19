@@ -1,4 +1,4 @@
-appId: com.hikid.app
+appId: fun.hikid.app
 productName: HiKid
 directories:
   buildResources: build
@@ -35,7 +35,7 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: HiKid Team
+  maintainer: xiaochong
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

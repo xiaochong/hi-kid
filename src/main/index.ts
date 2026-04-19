@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import { app, shell, BrowserWindow } from 'electron'
+import { app, shell, BrowserWindow, Menu } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -11,6 +11,8 @@ function cleanup(): void {
   stopSpeaking()
   stopServers()
 }
+
+app.setName('HiKid')
 
 function createWindow(): void {
   // Create the browser window.
@@ -48,8 +50,73 @@ function createWindow(): void {
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.whenReady().then(() => {
+  // Override macOS app menu so the menu bar shows "HiKid" instead of "Electron"
+  if (process.platform === 'darwin') {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'HiKid',
+        submenu: [
+          { role: 'about' },
+          { type: 'separator' },
+          { role: 'services' },
+          { type: 'separator' },
+          { role: 'hide' },
+          { role: 'hideOthers' },
+          { role: 'unhide' },
+          { type: 'separator' },
+          { role: 'quit' }
+        ]
+      },
+      {
+        label: 'Edit',
+        submenu: [
+          { role: 'undo' },
+          { role: 'redo' },
+          { type: 'separator' },
+          { role: 'cut' },
+          { role: 'copy' },
+          { role: 'paste' },
+          { role: 'selectAll' }
+        ]
+      },
+      {
+        label: 'View',
+        submenu: [
+          { role: 'reload' },
+          { role: 'forceReload' },
+          { role: 'toggleDevTools' },
+          { type: 'separator' },
+          { role: 'resetZoom' },
+          { role: 'zoomIn' },
+          { role: 'zoomOut' },
+          { type: 'separator' },
+          { role: 'togglefullscreen' }
+        ]
+      },
+      {
+        label: 'Window',
+        submenu: [
+          { role: 'minimize' },
+          { role: 'close' },
+          { role: 'zoom' },
+          { type: 'separator' },
+          { role: 'front' }
+        ]
+      }
+    ])
+    Menu.setApplicationMenu(menu)
+  }
+
   // Set app user model id for windows
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('fun.hikid.app')
+
+  // Configure macOS About panel
+  app.setAboutPanelOptions({
+    applicationName: 'HiKid',
+    applicationVersion: app.getVersion(),
+    version: `Electron ${process.versions.electron}`,
+    copyright: '© xiaochong'
+  })
 
   // Default open or close DevTools by F12 in development
   // and ignore CommandOrControl + R in production.

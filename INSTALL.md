@@ -43,28 +43,35 @@ brew install sox
 
 ### 2. 安装 TTS / ASR 服务器二进制
 
-下载以下文件到 `~/.config/hi-kid/bin/`：
-
-| 文件 | 说明 |
-|------|------|
-| `kitten-tts-server` | TTS 语音合成服务器 |
-| `asr-server` | ASR 语音识别服务器 |
-
-并赋予执行权限：
-
 ```bash
-chmod +x ~/.config/hi-kid/bin/kitten-tts-server
-chmod +x ~/.config/hi-kid/bin/asr-server
+mkdir -p ~/.config/hi-kid/bin && cd ~/.config/hi-kid
+
+# TTS 服务器（macOS ARM64）
+curl -LO https://github.com/second-state/kitten_tts_rs/releases/latest/download/kitten-tts-aarch64-macos.tar.gz
+tar xzf kitten-tts-aarch64-macos.tar.gz
+mv kitten-tts-aarch64-macos/kitten-tts-server bin/
+chmod +x bin/kitten-tts-server
+rm kitten-tts-aarch64-macos.tar.gz
+rmdir kitten-tts-aarch64-macos
+
+# ASR 服务器（macOS ARM64）
+curl -sSf https://raw.githubusercontent.com/second-state/qwen3_asr_rs/main/install.sh | bash
+mv qwen3_asr_rs/asr-server bin/
+chmod +x bin/asr-server
 ```
 
 ### 3. 下载模型文件
 
-将模型文件放到对应目录：
+```bash
+cd ~/.config/hi-kid
 
-```
-~/.config/hi-kid/models/
-  ├── kitten/kitten-tts-micro/
-  └── qwen3_asr_rs/Qwen3-ASR-0.6B/
+# TTS 模型
+curl -LO https://github.com/second-state/kitten_tts_rs/releases/latest/download/kitten-tts-models.tar.gz
+tar xzf kitten-tts-models.tar.gz
+rm kitten-tts-models.tar.gz
+
+# ASR 模型（已包含在 install.sh 安装目录中）
+# install.sh 执行后模型位于 ./qwen3_asr_rs/Qwen3-ASR-0.6B/
 ```
 
 ### 4. 运行 HiKid

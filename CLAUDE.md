@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-EchoKid - Your AI English Pal. An Electron desktop app built with React and TypeScript, targeting children in non-English-speaking countries who want to practice English speaking and listening.
+HiKid - Your AI English Pal. An Electron desktop app built with React and TypeScript, targeting children in non-English-speaking countries who want to practice English speaking and listening.
 
 ## Tech Stack
 

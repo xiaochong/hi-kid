@@ -1,10 +1,10 @@
 {
-  "name": "echo-kid",
+  "name": "hi-kid",
   "version": "1.0.0",
-  "description": "EchoKid - Your AI English Pal",
+  "description": "HiKid - Your AI English Pal",
   "main": "./out/main/index.js",
   "author": "xiaochong",
-  "homepage": "https://github.com/groovyquan/echo-kid",
+  "homepage": "https://github.com/groovyquan/hi-kid",
   "scripts": {
     "format": "prettier --write .",
     "lint": "eslint --cache .",

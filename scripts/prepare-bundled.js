@@ -2,8 +2,8 @@ const fs = require('fs')
 const path = require('path')
 
 const home = process.env.HOME || ''
-const srcBin = path.join(home, '.config', 'echo-kid', 'bin')
-const srcModels = path.join(home, '.config', 'echo-kid', 'models')
+const srcBin = path.join(home, '.config', 'hi-kid', 'bin')
+const srcModels = path.join(home, '.config', 'hi-kid', 'models')
 const destBin = path.join(__dirname, '..', 'resources', 'bin')
 const destModels = path.join(__dirname, '..', 'resources', 'models')
 

@@ -15,7 +15,7 @@ export default function Kitten({ state }: KittenProps): React.JSX.Element {
       height="200"
       viewBox="0 0 200 200"
       xmlns="http://www.w3.org/2000/svg"
-      aria-label="EchoKid kitten"
+      aria-label="HiKid kitten"
     >
       {/* Tail */}
       <g className={styles['kitten-tail']}>

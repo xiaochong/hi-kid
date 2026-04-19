@@ -17,8 +17,8 @@ interface DownloadProgress {
   currentFile: string
 }
 
-const TEXT_ENABLED_KEY = 'echokid-text-enabled'
-const ONBOARDED_KEY = 'echokid-onboarded'
+const TEXT_ENABLED_KEY = 'hikid-text-enabled'
+const ONBOARDED_KEY = 'hikid-onboarded'
 
 function loadTextEnabled(): boolean {
   try {

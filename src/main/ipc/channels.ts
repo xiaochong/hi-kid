@@ -16,9 +16,9 @@ import path from 'path'
 import os from 'os'
 
 // --- Config ---
-const ECHO_KID_DIR = path.join(process.env.HOME || os.homedir(), '.config', 'echo-kid')
-const MODELS_BASE_DIR = path.join(ECHO_KID_DIR, 'models')
-const BIN_DIR = path.join(ECHO_KID_DIR, 'bin')
+const HI_KID_DIR = path.join(process.env.HOME || os.homedir(), '.config', 'hi-kid')
+const MODELS_BASE_DIR = path.join(HI_KID_DIR, 'models')
+const BIN_DIR = path.join(HI_KID_DIR, 'bin')
 
 const config: ServerConfig = {
   ttsPort: parseInt(process.env.TTS_PORT || '8081'),
@@ -58,7 +58,7 @@ async function promptWithTimeout(agent: Agent, text: string): Promise<void> {
   })
 }
 
-const TMP_DIR = path.join(os.tmpdir(), 'echo-kid')
+const TMP_DIR = path.join(os.tmpdir(), 'hi-kid')
 const RECORDING_RAW = path.join(TMP_DIR, 'raw.wav')
 const RECORDING_FILE = path.join(TMP_DIR, 'recording.wav')
 
@@ -135,7 +135,7 @@ function getDownloadConfig(): DownloadConfig {
       { name: 'TTS Local', url: '', localPath: ttsLocal },
       { name: 'ASR Local', url: '', localPath: asrLocal }
     ],
-    userDataPath: ECHO_KID_DIR
+    userDataPath: HI_KID_DIR
   }
 }
 

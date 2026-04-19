@@ -1,5 +1,5 @@
-appId: com.echokid.app
-productName: EchoKid
+appId: com.hikid.app
+productName: HiKid
 directories:
   buildResources: build
 files:
@@ -12,7 +12,7 @@ files:
 asarUnpack:
   - resources/**
 win:
-  executableName: EchoKid
+  executableName: HiKid
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
@@ -35,7 +35,7 @@ linux:
     - AppImage
     - snap
     - deb
-  maintainer: EchoKid Team
+  maintainer: HiKid Team
   category: Utility
 appImage:
   artifactName: ${name}-${version}.${ext}

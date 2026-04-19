@@ -1,13 +1,13 @@
 ---
 date: 2026-04-18
-topic: echokid-voice-conversation-integration
+topic: hikid-voice-conversation-integration
 ---
 
-# EchoKid 语音对话功能整合需求
+# HiKid 语音对话功能整合需求
 
 ## Problem Frame
 
-EchoKid 是一个面向非英语国家儿童的 AI 英语口语练习桌面应用（Electron + React）。目前已有的 kitten-demo 是一个在控制台运行的完整语音对话系统，核心流程为：录音（VAD）→ ASR 转文本 → LLM 生成回复 → TTS 语音合成 → 播放。现在需要把这套能力整合进 EchoKid，并赋予它童趣、精美、专业的 UI 体验，让儿童能够直观、愉悦地与 AI 对话伙伴练习英语口语。
+HiKid 是一个面向非英语国家儿童的 AI 英语口语练习桌面应用（Electron + React）。目前已有的 kitten-demo 是一个在控制台运行的完整语音对话系统，核心流程为：录音（VAD）→ ASR 转文本 → LLM 生成回复 → TTS 语音合成 → 播放。现在需要把这套能力整合进 HiKid，并赋予它童趣、精美、专业的 UI 体验，让儿童能够直观、愉悦地与 AI 对话伙伴练习英语口语。
 
 目标用户是 7-12 岁、英语处于初级水平的儿童。界面需要零学习门槛，交互需要符合儿童心智模型，视觉需要足够吸引孩子持续使用。
 

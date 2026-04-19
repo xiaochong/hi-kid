@@ -3,20 +3,20 @@ title: 'feat: Integrate AI voice conversation with Kitten character UI'
 type: feat
 status: active
 date: 2026-04-18
-origin: docs/brainstorms/2026-04-18-echokid-voice-conversation-integration-requirements.md
+origin: docs/brainstorms/2026-04-18-hikid-voice-conversation-integration-requirements.md
 ---
 
 # feat: Integrate AI voice conversation with Kitten character UI
 
 ## Overview
 
-Port the existing `kitten-demo` console-based AI English conversation engine into EchoKid's Electron + React desktop app, wrapping it in a child-friendly UI built around a stateful Kitten SVG character. The work spans all three Electron processes (main, preload, renderer) and introduces a new visual identity, real-time state synchronization, model download infrastructure, and fairy-tale error handling.
+Port the existing `kitten-demo` console-based AI English conversation engine into HiKid's Electron + React desktop app, wrapping it in a child-friendly UI built around a stateful Kitten SVG character. The work spans all three Electron processes (main, preload, renderer) and introduces a new visual identity, real-time state synchronization, model download infrastructure, and fairy-tale error handling.
 
 ## Problem Frame
 
-EchoKid currently ships only the electron-vite default template — a dark-themed welcome screen with no conversational functionality. The `kitten-demo` CLI application (in a separate repo) already implements a complete voice loop (VAD recording → ASR → LLM → streaming TTS → playback) using local Rust services and Node.js audio tools. This plan defines how to lift that proven engine into EchoKid's multi-process architecture and dress it with a polished, Animal Crossing-inspired experience for children.
+HiKid currently ships only the electron-vite default template — a dark-themed welcome screen with no conversational functionality. The `kitten-demo` CLI application (in a separate repo) already implements a complete voice loop (VAD recording → ASR → LLM → streaming TTS → playback) using local Rust services and Node.js audio tools. This plan defines how to lift that proven engine into HiKid's multi-process architecture and dress it with a polished, Animal Crossing-inspired experience for children.
 
-(see origin: [docs/brainstorms/2026-04-18-echokid-voice-conversation-integration-requirements.md](../brainstorms/2026-04-18-echokid-voice-conversation-integration-requirements.md))
+(see origin: [docs/brainstorms/2026-04-18-hikid-voice-conversation-integration-requirements.md](../brainstorms/2026-04-18-hikid-voice-conversation-integration-requirements.md))
 
 ## Requirements Trace
 
@@ -62,7 +62,7 @@ EchoKid currently ships only the electron-vite default template — a dark-theme
 
 - **Main process hosts audio/Agent logic (reused from kitten-demo):** The proven sox-based recording, ASR/TTS HTTP services, and pi-agent-core Agent run in the main process. Renderer drives UI exclusively via IPC. Rationale: avoids rewriting a stable audio pipeline and maintains sentence-level TTS streaming behavior.
 - **State machine lives in renderer, fed by IPC events:** Main process sends `{state: 'idle' | 'listening' | 'thinking' | 'speaking' | 'interrupted'}` events. Renderer applies CSS transitions and SVG state changes. Rationale: animation timing must be frame-synced; Electron IPC latency (~1ms) is negligible for 200ms transitions.
-- **sox remains a system dependency for MVP:** EchoKid checks for sox at startup. If missing, shows a child-friendly prompt asking the parent to install it (with copy-paste commands). Rationale: bundling platform-specific sox binaries for macOS/Windows/Linux is a significant packaging task. Deferred to a future iteration.
+- **sox remains a system dependency for MVP:** HiKid checks for sox at startup. If missing, shows a child-friendly prompt asking the parent to install it (with copy-paste commands). Rationale: bundling platform-specific sox binaries for macOS/Windows/Linux is a significant packaging task. Deferred to a future iteration.
 - **Press-and-hold is the default interaction mode:** Both VAD and press-and-hold are available in the app, but only one is active at a time (mode switch in settings). Default to press-and-hold to avoid accidental VAD triggers. Rationale: children may produce ambient noise; a deliberate button press is a clearer mental model.
 - **Model downloads use HTTP range requests with file persistence in `userData`:** Enables resume on app restart. Download progress is streamed to renderer via IPC.
 - **Conversation text is ephemeral:** Subtitles exist only in renderer memory. On app close, history is lost. Rationale: scope boundary excludes history persistence.
@@ -548,7 +548,7 @@ sequenceDiagram
 
 **Approach:**
 
-- Update `productName`, `appId`, `executableName` to EchoKid values.
+- Update `productName`, `appId`, `executableName` to HiKid values.
 - Place TTS (`kitten-tts-server`) and ASR (`asr-server`) binaries in `resources/`. `electron-builder.yml`'s `asarUnpack: resources/**` ensures they are extracted at install time and accessible via `process.resourcesPath`.
 - Main process resolves binary paths relative to `process.resourcesPath` in production, or `PROJECT_ROOT` in development.
 - Add `postinstall` or prep step documentation for copying binaries into `resources/`.
@@ -561,7 +561,7 @@ sequenceDiagram
 
 **Test scenarios:**
 
-- **Happy path:** `npm run build:unpack` succeeds. `out/mac-arm64/EchoKid.app/Contents/Resources/` contains TTS/ASR binaries.
+- **Happy path:** `npm run build:unpack` succeeds. `out/mac-arm64/HiKid.app/Contents/Resources/` contains TTS/ASR binaries.
 - **Happy path:** Launch unpacked build. Services start using bundled binaries (not system PATH).
 - **Edge case:** Binary architecture mismatch (e.g., x64 binary on ARM64 macOS). Main process should detect and show a clear error.
 - **Integration:** Packaged app starts and runs a full conversation round-trip without developer tools.
@@ -601,7 +601,7 @@ sequenceDiagram
 
 ## Sources & References
 
-- **Origin document:** [docs/brainstorms/2026-04-18-echokid-voice-conversation-integration-requirements.md](../brainstorms/2026-04-18-echokid-voice-conversation-integration-requirements.md)
+- **Origin document:** [docs/brainstorms/2026-04-18-hikid-voice-conversation-integration-requirements.md](../brainstorms/2026-04-18-hikid-voice-conversation-integration-requirements.md)
 - **Reference implementation:** `kitten-demo/src/main.ts`, `kitten-demo/src/agent.ts`, `kitten-demo/src/servers.ts`
 - **UI library:** `animal-island-ui@0.1.0` ([npm](https://www.npmjs.com/package/animal-island-ui))
 - **Existing IPC docs:** `CLAUDE.md` IPC pattern section

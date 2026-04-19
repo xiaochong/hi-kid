@@ -30,7 +30,7 @@ function playSendSound(): void {
   }
 }
 
-const MODE_KEY = 'echokid-mode'
+const MODE_KEY = 'hikid-mode'
 
 function loadMode(): Mode {
   try {

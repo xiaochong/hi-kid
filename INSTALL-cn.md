@@ -1,10 +1,12 @@
+[English](INSTALL.md) | **简体中文**
+
 # HiKid 安装指南
 
 ## 系统要求
 
 - **macOS** 12.0+ (Apple Silicon / ARM64)
 - **RAM**: 8GB+ (推荐 16GB)
-- **存储**: 最小包 ~200MB，全量包 ~2GB
+- **存储**: ~2GB（含模型文件）
 
 ## 首次运行（重要）
 
@@ -31,9 +33,7 @@ xattr -cr /Applications/HiKid.app
 
 ---
 
-## 方案一：最小安装包（推荐开发者）
-
-应用体积最小，但需要手动安装依赖。
+## 安装步骤
 
 ### 1. 安装 SoX（音频工具）
 
@@ -80,34 +80,15 @@ rm kitten-tts-models.tar.gz
 
 ---
 
-## 方案二：全量安装包（推荐普通用户）
-
-开箱即用，无需手动下载任何依赖。
-
-### 步骤
-
-1. 下载 `HiKid-x.x.x.dmg`
-2. 打开 DMG，将 `HiKid.app` 拖入 Applications 文件夹
-3. 首次启动时前往 **系统设置 > 隐私与安全性 > 麦克风**，允许 HiKid 访问麦克风
-4. 双击启动，开始和 Kitten 对话！
-
----
-
 ## 启动 LLM 后端
 
 HiKid 默认连接本地的 Ollama 服务：
 
 ```bash
-ollama run qwen3
+ollama run qwen3:0.6b
 ```
 
-如果使用其他 LLM 后端，设置环境变量：
-
-```bash
-export OPENAI_BASE_URL="http://localhost:11434/v1"
-export OPENAI_API_KEY="ollama"
-export MODEL_NAME="qwen3"
-```
+如需使用其他 LLM 后端，打开应用内的**设置**面板，直接在里面配置 AI 地址、API 密钥和模型名称即可，无需修改环境变量。
 
 ---
 
@@ -123,11 +104,11 @@ brew install sox
 
 ### "kitten-tts-server not found"
 
-TTS 服务器二进制文件缺失。按方案一第 2 步安装。
+TTS 服务器二进制文件缺失。按上面第 2 步安装。
 
 ### "ASR model not found"
 
-模型文件缺失。按方案一第 3 步下载模型，或启动应用后使用内置下载功能。
+模型文件缺失。按上面第 3 步下载模型，或启动应用后使用内置下载功能。
 
 ### 麦克风无响应
 

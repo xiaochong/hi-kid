@@ -6,7 +6,7 @@
 
 - **macOS** 12.0+ (Apple Silicon / ARM64)
 - **RAM**: 8GB+ (16GB recommended)
-- **Storage**: Minimal package ~200MB, full package ~2GB
+- **Storage**: ~2GB (including model files)
 
 ## First Launch (Important)
 
@@ -33,9 +33,7 @@ Hold the `Control` key and click the app icon, then choose "Open"
 
 ---
 
-## Option 1: Minimal Package (Recommended for Developers)
-
-Smallest app size, but requires manual dependency installation.
+## Installation Steps
 
 ### 1. Install SoX (audio tools)
 
@@ -82,34 +80,15 @@ Drag `HiKid.app` into your Applications folder and launch.
 
 ---
 
-## Option 2: Full Package (Recommended for Regular Users)
-
-Works out of the box, no manual downloads needed.
-
-### Steps
-
-1. Download `HiKid-x.x.x.dmg`
-2. Open the DMG and drag `HiKid.app` into Applications
-3. On first launch, go to **System Settings > Privacy & Security > Microphone** and allow HiKid microphone access
-4. Double-click to launch and start talking to Kitten!
-
----
-
 ## Start the LLM Backend
 
 HiKid connects to a local Ollama service by default:
 
 ```bash
-ollama run qwen3
+ollama run qwen3:0.6b
 ```
 
-If using a different LLM backend, set environment variables:
-
-```bash
-export OPENAI_BASE_URL="http://localhost:11434/v1"
-export OPENAI_API_KEY="ollama"
-export MODEL_NAME="qwen3"
-```
+To use a different LLM backend, open **Settings** in the app and configure the AI endpoint, API key, and model name there — no environment variables needed.
 
 ---
 
@@ -125,11 +104,11 @@ brew install sox
 
 ### "kitten-tts-server not found"
 
-The TTS server binary is missing. Install it following Option 1 Step 2.
+The TTS server binary is missing. Install it following Step 2 above.
 
 ### "ASR model not found"
 
-Model files are missing. Download them following Option 1 Step 3, or use the built-in download feature after launching the app.
+Model files are missing. Download them following Step 3 above, or use the built-in download feature after launching the app.
 
 ### Microphone not responding
 

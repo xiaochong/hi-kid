@@ -3,9 +3,10 @@ import styles from './OnboardingScreen.module.css'
 
 interface OnboardingScreenProps {
   onStart: () => void
+  aiName?: string
 }
 
-export default function OnboardingScreen({ onStart }: OnboardingScreenProps): React.JSX.Element {
+export default function OnboardingScreen({ onStart, aiName = 'Kitten' }: OnboardingScreenProps): React.JSX.Element {
   return (
     <div className={styles.container}>
       <div className={styles.kittenWrapper}>
@@ -13,7 +14,7 @@ export default function OnboardingScreen({ onStart }: OnboardingScreenProps): Re
       </div>
 
       <div className={styles.content}>
-        <h2 className={styles.title}>Hi, I am Kitten!</h2>
+        <h2 className={styles.title}>Hi, I am {aiName}!</h2>
         <p className={styles.subtitle}>Your English-speaking friend</p>
 
         <div className={styles.steps}>

@@ -12,6 +12,20 @@ const api = {
   startDownload: (): Promise<void> => ipcRenderer.invoke('models:download'),
   startRecording: (): Promise<boolean> => ipcRenderer.invoke('recorder:start'),
   stopRecording: (): Promise<void> => ipcRenderer.invoke('recorder:stop'),
+  getConfig: (): Promise<{
+    aiName: string
+    systemPrompt: string
+    baseUrl: string
+    apiKey: string
+    modelName: string
+  }> => ipcRenderer.invoke('config:get'),
+  setConfig: (config: {
+    aiName: string
+    systemPrompt: string
+    baseUrl: string
+    apiKey: string
+    modelName: string
+  }): Promise<void> => ipcRenderer.invoke('config:set', config),
 
   // -- Subscriptions (main -> renderer) --
   onServiceStatus: (callback: (status: { ready: boolean }) => void): (() => void) => {
@@ -77,6 +91,31 @@ const api = {
     ipcRenderer.on('error', handler)
     return (): void => {
       ipcRenderer.removeListener('error', handler)
+    }
+  },
+
+  onConfigChanged: (
+    callback: (config: {
+      aiName: string
+      systemPrompt: string
+      baseUrl: string
+      apiKey: string
+      modelName: string
+    }) => void
+  ): (() => void) => {
+    const handler = (
+      _: unknown,
+      config: {
+        aiName: string
+        systemPrompt: string
+        baseUrl: string
+        apiKey: string
+        modelName: string
+      }
+    ): void => callback(config)
+    ipcRenderer.on('config:changed', handler)
+    return (): void => {
+      ipcRenderer.removeListener('config:changed', handler)
     }
   }
 }

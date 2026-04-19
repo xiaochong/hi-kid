@@ -140,6 +140,8 @@ export interface AgentConfig {
   modelName: string
   ttsPort: number
   unreachableHint?: string
+  aiName?: string
+  systemPrompt?: string
 }
 
 export async function createAgent(config: AgentConfig): Promise<Agent> {
@@ -185,9 +187,10 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
     }
   }
 
-  const agent = new Agent({
-    initialState: {
-      systemPrompt: `You are a friendly English conversation partner named Kitten. Your goal is to help the user practice spoken English.
+  const aiName = config.aiName?.trim() || 'Kitten'
+  const rawSystemPrompt =
+    config.systemPrompt?.trim() ||
+    `You are a friendly English conversation partner named ${aiName}. Your goal is to help the user practice spoken English.
 
 Rules:
 - Always respond in English
@@ -197,7 +200,12 @@ Rules:
 - Ask follow-up questions to keep the conversation going
 - Adapt to the user's level - if they're beginner, use simpler vocabulary
 - Absolute prohibition of emoji usage / Emojis are strictly forbidden
-`,
+`
+  const systemPrompt = rawSystemPrompt.replace(/\{\{AI_NAME\}\}/g, aiName)
+
+  const agent = new Agent({
+    initialState: {
+      systemPrompt,
       model,
       thinkingLevel: 'off',
       tools: []

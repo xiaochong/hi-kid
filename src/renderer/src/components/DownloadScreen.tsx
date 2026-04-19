@@ -5,12 +5,14 @@ interface DownloadScreenProps {
   bytes: number
   total: number
   currentFile: string
+  aiName?: string
 }
 
 export default function DownloadScreen({
   bytes,
   total,
-  currentFile
+  currentFile,
+  aiName = 'Kitten'
 }: DownloadScreenProps): React.JSX.Element {
   const [dots, setDots] = useState('')
 
@@ -25,9 +27,9 @@ export default function DownloadScreen({
   const isComplete = percent >= 100
 
   const messages = [
-    'Kitten is getting ready',
-    'Kitten is unpacking toys',
-    'Kitten is brushing fur',
+    `${aiName} is getting ready`,
+    `${aiName} is unpacking toys`,
+    `${aiName} is brushing fur`,
     'Almost there'
   ]
   const messageIndex = Math.min(Math.floor((percent / 100) * messages.length), messages.length - 1)

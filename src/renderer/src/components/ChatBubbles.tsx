@@ -4,6 +4,7 @@ import { type ChatMessage } from '@renderer/types/conversation'
 interface ChatBubblesProps {
   messages: ChatMessage[]
   visible: boolean
+  aiName?: string
 }
 
 function TypingDots(): React.JSX.Element {
@@ -35,7 +36,8 @@ function AssistantIcon(): React.JSX.Element {
 
 export default function ChatBubbles({
   messages,
-  visible
+  visible,
+  aiName = 'Kitten'
 }: ChatBubblesProps): React.JSX.Element | null {
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -66,7 +68,7 @@ export default function ChatBubbles({
 
       {messages.length === 0 && (
         <div className="chat-empty-hint">
-          <span>Say hello to Kitten</span>
+          <span>Say hello to {aiName}</span>
         </div>
       )}
 

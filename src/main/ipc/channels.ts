@@ -7,10 +7,18 @@ import {
   getIsSpeaking,
   isAgentBusy,
   resetConversationState,
+  resetAgent,
   type AgentConfig
 } from '../services/agent'
-import { recordWithVad, stopRecordingProcess, convertAudio, analyzeAudio, MIN_VALID_RMS } from '../services/recorder'
+import {
+  recordWithVad,
+  stopRecordingProcess,
+  convertAudio,
+  analyzeAudio,
+  MIN_VALID_RMS
+} from '../services/recorder'
 import { checkModelsExist, downloadModels, type DownloadConfig } from '../services/download'
+import { loadConfig, saveConfig, type AppConfig } from '../services/config'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -20,7 +28,7 @@ const HI_KID_DIR = path.join(process.env.HOME || os.homedir(), '.config', 'hi-ki
 const MODELS_BASE_DIR = path.join(HI_KID_DIR, 'models')
 const BIN_DIR = path.join(HI_KID_DIR, 'bin')
 
-const config: ServerConfig = {
+const serverConfig: ServerConfig = {
   ttsPort: parseInt(process.env.TTS_PORT || '8081'),
   asrPort: parseInt(process.env.ASR_PORT || '8082'),
   ttsModelPath:
@@ -29,11 +37,23 @@ const config: ServerConfig = {
     process.env.ASR_MODEL_PATH || path.join(MODELS_BASE_DIR, 'qwen3_asr_rs', 'Qwen3-ASR-0.6B')
 }
 
-const OPENAI_BASE_URL = process.env.OPENAI_BASE_URL || 'http://localhost:11434/v1'
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || 'ollama'
-const MODEL_NAME = process.env.MODEL_NAME || 'qwen3:0.6b'
+function getLlmConfig(): Pick<
+  AppConfig,
+  'baseUrl' | 'apiKey' | 'modelName' | 'aiName' | 'systemPrompt'
+> {
+  const cfg = loadConfig()
+  return {
+    baseUrl: cfg.baseUrl,
+    apiKey: cfg.apiKey,
+    modelName: cfg.modelName,
+    aiName: cfg.aiName,
+    systemPrompt: cfg.systemPrompt
+  }
+}
+
 const LLM_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS || '15000', 10)
-const LLM_UNREACHABLE_HINT = process.env.LLM_UNREACHABLE_HINT || 'Ollama seems to be taking a nap. Make sure it is running!'
+const LLM_UNREACHABLE_HINT =
+  process.env.LLM_UNREACHABLE_HINT || 'Ollama seems to be taking a nap. Make sure it is running!'
 
 import { type Agent } from '@mariozechner/pi-agent-core'
 
@@ -43,18 +63,16 @@ async function promptWithTimeout(agent: Agent, text: string): Promise<void> {
       reject(new Error('LLM_TIMEOUT'))
     }, LLM_TIMEOUT_MS)
 
-    agent
-      .prompt(text)
-      .then(
-        () => {
-          clearTimeout(timer)
-          resolve()
-        },
-        (err: unknown) => {
-          clearTimeout(timer)
-          reject(err)
-        }
-      )
+    agent.prompt(text).then(
+      () => {
+        clearTimeout(timer)
+        resolve()
+      },
+      (err: unknown) => {
+        clearTimeout(timer)
+        reject(err)
+      }
+    )
   })
 }
 
@@ -72,8 +90,8 @@ function getDownloadConfig(): DownloadConfig {
   const ttsBinUrl = process.env.TTS_BIN_DOWNLOAD_URL || ''
   const asrBinUrl = process.env.ASR_BIN_DOWNLOAD_URL || ''
 
-  const ttsLocal = path.resolve(config.ttsModelPath)
-  const asrLocal = path.resolve(config.asrModelPath)
+  const ttsLocal = path.resolve(serverConfig.ttsModelPath)
+  const asrLocal = path.resolve(serverConfig.asrModelPath)
   const ttsBinLocal = path.join(BIN_DIR, 'kitten-tts-server')
   const asrBinLocal = path.join(BIN_DIR, 'asr-server')
 
@@ -192,27 +210,30 @@ async function startServicesInternal(): Promise<void> {
 
   try {
     // Check model directories exist before starting servers
-    if (!fs.existsSync(config.ttsModelPath)) {
+    if (!fs.existsSync(serverConfig.ttsModelPath)) {
       throw new Error(
-        `TTS model not found at ${config.ttsModelPath}. Place the model there or set TTS_MODEL_DOWNLOAD_URL to download it.`
+        `TTS model not found at ${serverConfig.ttsModelPath}. Place the model there or set TTS_MODEL_DOWNLOAD_URL to download it.`
       )
     }
-    if (!fs.existsSync(config.asrModelPath)) {
+    if (!fs.existsSync(serverConfig.asrModelPath)) {
       throw new Error(
-        `ASR model not found at ${config.asrModelPath}. Place the model there or set ASR_MODEL_DOWNLOAD_URL to download it.`
+        `ASR model not found at ${serverConfig.asrModelPath}. Place the model there or set ASR_MODEL_DOWNLOAD_URL to download it.`
       )
     }
 
     fs.mkdirSync(TMP_DIR, { recursive: true })
-    await startServers(config)
+    await startServers(serverConfig)
     servicesReady = true
     sendToRenderer('service:status', { ready: true })
 
+    const llmCfg = getLlmConfig()
     const agentConfig: AgentConfig = {
-      baseUrl: OPENAI_BASE_URL,
-      apiKey: OPENAI_API_KEY,
-      modelName: MODEL_NAME,
-      ttsPort: config.ttsPort,
+      baseUrl: llmCfg.baseUrl,
+      apiKey: llmCfg.apiKey,
+      modelName: llmCfg.modelName,
+      aiName: llmCfg.aiName,
+      systemPrompt: llmCfg.systemPrompt,
+      ttsPort: serverConfig.ttsPort,
       unreachableHint: LLM_UNREACHABLE_HINT
     }
     await createAgent(agentConfig)
@@ -222,6 +243,27 @@ async function startServicesInternal(): Promise<void> {
     sendFairyTaleError('SERVICE_START')
     throw err
   }
+}
+
+async function recreateAgent(): Promise<void> {
+  stopSpeaking()
+  const agent = getAgent()
+  if (agent) {
+    agent.abort()
+    resetAgent()
+  }
+
+  const llmCfg = getLlmConfig()
+  const agentConfig: AgentConfig = {
+    baseUrl: llmCfg.baseUrl,
+    apiKey: llmCfg.apiKey,
+    modelName: llmCfg.modelName,
+    aiName: llmCfg.aiName,
+    systemPrompt: llmCfg.systemPrompt,
+    ttsPort: serverConfig.ttsPort,
+    unreachableHint: LLM_UNREACHABLE_HINT
+  }
+  await createAgent(agentConfig)
 }
 
 export function registerIpcChannels(): void {
@@ -321,7 +363,7 @@ export function registerIpcChannels(): void {
     if (recorderLock || !servicesReady) return false
 
     recorderLock = (async () => {
-        sendToRenderer('kitten:state', 'listening')
+      sendToRenderer('kitten:state', 'listening')
 
       try {
         await recordWithVad(RECORDING_RAW)
@@ -347,7 +389,7 @@ export function registerIpcChannels(): void {
         formData.append('language', 'english')
         formData.append('response_format', 'json')
 
-        const res = await fetch(`${asrUrl(config)}/v1/audio/transcriptions`, {
+        const res = await fetch(`${asrUrl(serverConfig)}/v1/audio/transcriptions`, {
           method: 'POST',
           body: formData
         })
@@ -402,6 +444,74 @@ export function registerIpcChannels(): void {
       await recorderLock
     } else {
       resetRecordingState()
+    }
+  })
+
+  // --- Config handlers ---
+  ipcMain.handle('config:get', () => {
+    const cfg = loadConfig()
+    return {
+      aiName: cfg.aiName,
+      systemPrompt: cfg.systemPrompt,
+      baseUrl: cfg.baseUrl,
+      apiKey: cfg.apiKey,
+      modelName: cfg.modelName
+    }
+  })
+
+  ipcMain.handle('config:set', async (_event, newConfig: unknown) => {
+    if (typeof newConfig !== 'object' || newConfig === null) {
+      throw new Error('Invalid config object')
+    }
+    const n = newConfig as Record<string, unknown>
+
+    // Validate required fields
+    if (typeof n.aiName !== 'string' || n.aiName.length > 32) {
+      throw new Error('AI name must be a string with max 32 characters')
+    }
+    if (typeof n.systemPrompt !== 'string') {
+      throw new Error('System prompt must be a string')
+    }
+    if (typeof n.baseUrl !== 'string' || n.baseUrl.length > 512) {
+      throw new Error('Base URL must be a string with max 512 characters')
+    }
+    if (typeof n.apiKey !== 'string' || n.apiKey.length > 512) {
+      throw new Error('API key must be a string with max 512 characters')
+    }
+    if (typeof n.modelName !== 'string' || n.modelName.length > 128) {
+      throw new Error('Model name must be a string with max 128 characters')
+    }
+
+    const current = loadConfig()
+    const updated: AppConfig = {
+      version: current.version,
+      aiName: n.aiName.trim() || current.aiName,
+      systemPrompt: n.systemPrompt || current.systemPrompt,
+      baseUrl: n.baseUrl.trim() || current.baseUrl,
+      apiKey: n.apiKey,
+      modelName: n.modelName.trim() || current.modelName
+    }
+
+    const llmChanged =
+      updated.baseUrl !== current.baseUrl ||
+      updated.apiKey !== current.apiKey ||
+      updated.modelName !== current.modelName
+
+    saveConfig(updated)
+
+    if (llmChanged && servicesReady) {
+      try {
+        await recreateAgent()
+        resetConversationState()
+        sendToRenderer('config:changed', updated)
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error('[config:set] Failed to recreate agent:', message)
+        sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
+        throw new Error('Failed to reconnect to AI with new settings')
+      }
+    } else {
+      sendToRenderer('config:changed', updated)
     }
   })
 }

@@ -2,6 +2,14 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 
 type KittenState = 'idle' | 'listening' | 'thinking' | 'speaking' | 'interrupted'
 
+interface ConfigData {
+  aiName: string
+  systemPrompt: string
+  baseUrl: string
+  apiKey: string
+  modelName: string
+}
+
 interface Api {
   // Invokes
   startServices(): Promise<void>
@@ -13,6 +21,8 @@ interface Api {
   startDownload(): Promise<void>
   startRecording(): Promise<boolean>
   stopRecording(): Promise<void>
+  getConfig(): Promise<ConfigData>
+  setConfig(config: ConfigData): Promise<void>
 
   // Subscriptions
   onServiceStatus(callback: (status: { ready: boolean }) => void): () => void
@@ -24,6 +34,7 @@ interface Api {
     callback: (data: { bytes: number; total: number; currentFile: string }) => void
   ): () => void
   onError(callback: (data: { message: string }) => void): () => void
+  onConfigChanged(callback: (config: ConfigData) => void): () => void
 }
 
 declare global {

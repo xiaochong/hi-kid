@@ -64,6 +64,7 @@ export interface UseConversationReturn {
   setMode: (mode: Mode) => void
   clearError: () => void
   clearMessages: () => void
+  addSystemMessage: (text: string) => void
 }
 
 export function useConversation(): UseConversationReturn {
@@ -221,6 +222,10 @@ export function useConversation(): UseConversationReturn {
     })
   }, [])
 
+  const addSystemMessage = useCallback((text: string) => {
+    setMessages((prev) => [...prev, { role: 'system', text }])
+  }, [])
+
   // VAD mode: auto-restart listening after each conversation turn
   useEffect(() => {
     if (mode !== 'vad' || !servicesReady) return
@@ -248,6 +253,7 @@ export function useConversation(): UseConversationReturn {
     interrupt,
     setMode,
     clearError,
-    clearMessages
+    clearMessages,
+    addSystemMessage
   }
 }

@@ -9,7 +9,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: url('/cursor-icon.png') 4 0, pointer;
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    pointer;
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.1),
     0 0 0 4px rgba(168, 230, 207, 0.3);
@@ -37,7 +39,9 @@
 
 .voiceButton:disabled {
   opacity: 0.45;
-  cursor: url('/cursor-icon.png') 4 0, not-allowed;
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    not-allowed;
 }
 
 .icon {

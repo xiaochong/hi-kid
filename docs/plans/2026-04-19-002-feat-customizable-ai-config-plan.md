@@ -1,5 +1,5 @@
 ---
-title: "feat: Add customizable AI config with settings panel"
+title: 'feat: Add customizable AI config with settings panel'
 type: feat
 status: active
 date: 2026-04-19
@@ -62,7 +62,7 @@ No `docs/solutions/` directory exists. This is the second feature plan after voi
 - **Config priority:** `config.json` > environment variables > hardcoded defaults. Env vars serve as dev-time overrides.
 - **SettingsPanel interaction:** A gear icon next to the mode toggles opens a dropdown panel below the settings bar (following the existing `TopicSuggestions` dropdown pattern in `App.tsx`). This avoids adding a new screen or modal while keeping the header compact.
 - **Agent rebuild on LLM change:** `stopSpeaking()` -> `agent.abort()` -> create new Agent with new config. The TTS queue (`ttsQueue` Promise chain) may outlive the abort; this is accepted as a known edge case for this iteration.
-- **System prompt immediate effect:** pi-agent-core reads `systemPrompt` at the start of each conversation turn via `createContextSnapshot()`. Changes therefore take effect on the *next* turn, not the current in-flight turn.
+- **System prompt immediate effect:** pi-agent-core reads `systemPrompt` at the start of each conversation turn via `createContextSnapshot()`. Changes therefore take effect on the _next_ turn, not the current in-flight turn.
 
 ## Open Questions
 
@@ -89,9 +89,11 @@ No `docs/solutions/` directory exists. This is the second feature plan after voi
 **Dependencies:** None
 
 **Files:**
+
 - Create: `src/main/services/config.ts`
 
 **Approach:**
+
 - Define `AppConfig` interface with all configurable fields plus `version: number`
 - `loadConfig()` reads `~/.config/hi-kid/config.json`, merges with defaults, validates fields
 - `saveConfig()` writes to temp file then renames for atomicity
@@ -100,15 +102,18 @@ No `docs/solutions/` directory exists. This is the second feature plan after voi
 - On write, ensure directory exists, set file mode to 0o600
 
 **Patterns to follow:**
+
 - Existing `fs`/`path`/`os` usage in `channels.ts` for directory operations
 
 **Test scenarios:**
+
 - Happy path: Read valid config -> returns parsed values
 - Edge case: Missing config file -> returns defaults and creates file
 - Error path: Corrupted JSON -> returns defaults, logs error, regenerates file
 - Edge case: Empty AI name in config -> falls back to "Kitten"
 
 **Verification:**
+
 - `loadConfig()` returns correct defaults when file is missing
 - `saveConfig()` creates a readable JSON file at the expected path
 - Corrupted config triggers fallback without crashing
@@ -124,25 +129,30 @@ No `docs/solutions/` directory exists. This is the second feature plan after voi
 **Dependencies:** Unit 1
 
 **Files:**
+
 - Modify: `src/preload/index.ts`
 - Modify: `src/preload/index.d.ts`
 - Modify: `src/main/ipc/channels.ts`
 
 **Approach:**
+
 - Add `config:get` invoke: returns current config from main process
 - Add `config:set` invoke: validates and saves config, then notifies renderer
 - Add `config:changed` subscription: main pushes config updates to renderer after save
 - Update `preload/index.d.ts` with new method signatures on `Window.api`
 
 **Patterns to follow:**
+
 - Existing invoke/subscription pattern (see `services:start`, `onServiceStatus`)
 
 **Test scenarios:**
+
 - Happy path: Renderer calls `window.api.getConfig()` -> receives config object
 - Happy path: Renderer calls `window.api.setConfig(newConfig)` -> config is saved and `config:changed` fires
 - Error path: Invalid config (e.g. empty baseUrl) -> rejected with error message
 
 **Verification:**
+
 - DevTools console can call `window.api.getConfig()` and see the config object
 - Changing a value via `setConfig` updates the file on disk
 
@@ -157,28 +167,33 @@ No `docs/solutions/` directory exists. This is the second feature plan after voi
 **Dependencies:** Unit 1
 
 **Files:**
+
 - Modify: `src/main/services/agent.ts`
 - Modify: `src/main/ipc/channels.ts`
 
 **Approach:**
+
 - Update `AgentConfig` interface to include `aiName` and `systemPrompt`
 - Update `createAgent` to accept `aiName` and inject it into the system prompt template
 - Add `recreateAgent()` helper that calls `stopSpeaking()`, aborts current agent, then creates new one
 - In `channels.ts`, replace module-level `const` LLM config with a function that reads from config service
 
 **Patterns to follow:**
+
 - Existing `createAgent`/`getAgent`/`resetAgent` singleton pattern
 
 **Technical design:**
 The system prompt template currently hardcodes "Kitten". With dynamic names, the prompt should interpolate the configured name. A simple approach is to replace "named Kitten" with `named ${config.aiName}` in the default prompt, or allow the user to write a fully custom prompt where they can reference the name if desired.
 
 **Test scenarios:**
+
 - Happy path: Create agent with custom name -> system prompt contains the custom name
 - Happy path: Create agent with custom system prompt -> prompt is used verbatim
 - Integration: `recreateAgent()` stops TTS and creates a new agent instance
 - Edge case: Recreate while agent is thinking -> old stream is aborted cleanly
 
 **Verification:**
+
 - Agent responds using the configured name in conversation
 - Changing LLM params and saving triggers agent recreation
 
@@ -193,11 +208,13 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 **Dependencies:** Unit 2
 
 **Files:**
+
 - Modify: `src/renderer/src/components/SettingsPanel.tsx`
 - Modify: `src/renderer/src/components/SettingsPanel.module.css`
 - Create: `src/renderer/src/hooks/useConfig.ts`
 
 **Approach:**
+
 - Add a gear icon button to the right of the mode toggles in `SettingsPanel`
 - Clicking the gear opens a dropdown panel below with a form
 - Form fields: AI Name (text), System Prompt (textarea), Base URL (text), API Key (text), Model Name (text)
@@ -207,10 +224,12 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 - Escape key closes the panel; click outside also closes
 
 **Patterns to follow:**
+
 - `TopicSuggestions` dropdown pattern in `App.tsx` (click outside to close)
 - Existing `SettingsPanel.module.css` for styling
 
 **Test scenarios:**
+
 - Happy path: Open settings, change AI name, save -> toast appears, name updates
 - Edge case: Enter invalid URL -> inline error, save disabled
 - Edge case: Enter empty AI name -> falls back to "Kitten" on save
@@ -218,6 +237,7 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 - Integration: Change LLM params -> main process recreates agent, UI shows brief "reconnecting" state
 
 **Verification:**
+
 - Form opens and closes correctly
 - All 5 fields can be edited and saved
 - Invalid input prevents save with clear feedback
@@ -234,27 +254,32 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 **Dependencies:** Unit 2, Unit 4
 
 **Files:**
+
 - Modify: `src/renderer/src/components/OnboardingScreen.tsx`
 - Modify: `src/renderer/src/components/ChatBubbles.tsx`
 - Modify: `src/renderer/src/components/DownloadScreen.tsx`
 - Modify: `src/renderer/src/App.tsx`
 
 **Approach:**
+
 - `OnboardingScreen`: Accept `aiName` prop, render `Hi, I am {aiName}!`
 - `ChatBubbles`: Accept `aiName` prop, render `Say hello to {aiName}` in empty state
 - `DownloadScreen`: Accept `aiName` prop, replace "Kitten is..." messages with `{aiName} is...`
 - `App.tsx`: Fetch config on mount, pass `aiName` to child components
 
 **Patterns to follow:**
+
 - Props drilling pattern already used in the component tree
 
 **Test scenarios:**
+
 - Happy path: Change AI name in settings -> onboarding screen shows new name immediately
 - Happy path: Chat bubbles empty state shows configured name
 - Happy path: Download screen messages use configured name
 - Edge case: Very long AI name -> should not break layout (CSS overflow handling)
 
 **Verification:**
+
 - All three screens display the configured AI name
 - Name change in settings is reflected without app restart
 
@@ -269,11 +294,13 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 **Dependencies:** Unit 1, Unit 2, Unit 3, Unit 4, Unit 5
 
 **Files:**
+
 - Modify: `src/main/ipc/channels.ts`
 - Modify: `src/renderer/src/App.tsx`
 - Modify: `src/renderer/src/hooks/useConversation.ts` (if needed for state reset)
 
 **Approach:**
+
 - In `channels.ts`, when `config:set` is called:
   1. Validate and save config via config service
   2. If LLM params changed, call `recreateAgent()` with new config
@@ -283,10 +310,12 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 - Show a brief status message during rebuild (e.g. "Reconnecting to AI...")
 
 **Patterns to follow:**
+
 - Existing `sendToRenderer` pattern for main->renderer events
 - Existing `services:status` event flow for service state changes
 
 **Test scenarios:**
+
 - Happy path: Save new LLM params -> agent reconnects, conversation clears, can talk to new model
 - Happy path: Save only AI name -> no agent rebuild, name updates instantly in UI
 - Happy path: Save only system prompt -> next conversation turn uses new prompt
@@ -294,6 +323,7 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 - Integration: Change config while agent is speaking -> speaking stops, agent rebuilds
 
 **Verification:**
+
 - Full round-trip: edit config -> save -> file updates -> agent uses new params -> UI reflects changes
 - Changing only name does not interrupt conversation
 - Changing LLM params clears conversation history
@@ -308,12 +338,12 @@ The system prompt template currently hardcodes "Kitten". With dynamic names, the
 
 ## Risks & Dependencies
 
-| Risk | Mitigation |
-|------|------------|
-| pi-agent-core Agent may not support `unsubscribe()` | Verify at implementation; if absent, rely on reference overwrite and GC |
-| TTS queue continues after agent abort during rebuild | Accepted for this iteration; add abort flag if it causes UX issues |
-| Invalid LLM config leaves app in broken state | Validate before save; on rebuild failure, keep old agent running and show error |
-| Config file corruption on crash during write | Atomic write (temp+rename) mitigates this; fallback to defaults on read error |
+| Risk                                                 | Mitigation                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| pi-agent-core Agent may not support `unsubscribe()`  | Verify at implementation; if absent, rely on reference overwrite and GC         |
+| TTS queue continues after agent abort during rebuild | Accepted for this iteration; add abort flag if it causes UX issues              |
+| Invalid LLM config leaves app in broken state        | Validate before save; on rebuild failure, keep old agent running and show error |
+| Config file corruption on crash during write         | Atomic write (temp+rename) mitigates this; fallback to defaults on read error   |
 
 ## Documentation / Operational Notes
 

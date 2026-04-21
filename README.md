@@ -138,5 +138,5 @@ MIT
 ---
 
 <p align="center">
-  Made with 💛 for kids around the world
+  Made with  ❤️ for kids around the world
 </p>

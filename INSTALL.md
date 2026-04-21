@@ -41,7 +41,13 @@ Hold the `Control` key and click the app icon, then choose "Open"
 brew install sox
 ```
 
-### 2. Install TTS / ASR server binaries
+### 2. Install espeak-ng (TTS dependency)
+
+```bash
+brew install espeak-ng
+```
+
+### 3. Install TTS / ASR server binaries
 
 ```bash
 mkdir -p ~/.config/hi-kid/bin && cd ~/.config/hi-kid
@@ -57,10 +63,11 @@ rmdir kitten-tts-aarch64-macos
 # ASR server (macOS ARM64)
 curl -sSf https://raw.githubusercontent.com/second-state/qwen3_asr_rs/main/install.sh | bash
 mv qwen3_asr_rs/asr-server bin/
+mv qwen3_asr_rs/mlx.metallib bin/
 chmod +x bin/asr-server
 ```
 
-### 3. Download model files
+### 4. Download model files
 
 ```bash
 cd ~/.config/hi-kid
@@ -70,11 +77,16 @@ curl -LO https://github.com/second-state/kitten_tts_rs/releases/latest/download/
 tar xzf kitten-tts-models.tar.gz
 rm kitten-tts-models.tar.gz
 
+# The archive extracts to models/kitten-tts-micro/, but the app expects models/kitten/kitten-tts-micro/
+mkdir -p models/kitten
+mv models/kitten-tts-micro models/kitten/
+
 # ASR model (already included in the install.sh directory)
 # After install.sh runs, models are at ./qwen3_asr_rs/Qwen3-ASR-0.6B/
+mv qwen3_asr_rs models/
 ```
 
-### 4. Run HiKid
+### 5. Run HiKid
 
 Drag `HiKid.app` into your Applications folder and launch.
 
@@ -102,13 +114,21 @@ SoX is not installed. Run:
 brew install sox
 ```
 
+### "espeak-ng not found" or TTS server fails to start
+
+espeak-ng is not installed. Run:
+
+```bash
+brew install espeak-ng
+```
+
 ### "kitten-tts-server not found"
 
-The TTS server binary is missing. Install it following Step 2 above.
+The TTS server binary is missing. Install it following Step 3 above.
 
 ### "ASR model not found"
 
-Model files are missing. Download them following Step 3 above, or use the built-in download feature after launching the app.
+Model files are missing. Download them following Step 4 above, or use the built-in download feature after launching the app.
 
 ### Microphone not responding
 

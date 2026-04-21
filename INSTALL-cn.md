@@ -41,7 +41,13 @@ xattr -cr /Applications/HiKid.app
 brew install sox
 ```
 
-### 2. 安装 TTS / ASR 服务器二进制
+### 2. 安装 espeak-ng（TTS 依赖）
+
+```bash
+brew install espeak-ng
+```
+
+### 3. 安装 TTS / ASR 服务器二进制
 
 ```bash
 mkdir -p ~/.config/hi-kid/bin && cd ~/.config/hi-kid
@@ -57,10 +63,11 @@ rmdir kitten-tts-aarch64-macos
 # ASR 服务器（macOS ARM64）
 curl -sSf https://raw.githubusercontent.com/second-state/qwen3_asr_rs/main/install.sh | bash
 mv qwen3_asr_rs/asr-server bin/
+mv qwen3_asr_rs/mlx.metallib bin/
 chmod +x bin/asr-server
 ```
 
-### 3. 下载模型文件
+### 4. 下载模型文件
 
 ```bash
 cd ~/.config/hi-kid
@@ -70,11 +77,16 @@ curl -LO https://github.com/second-state/kitten_tts_rs/releases/latest/download/
 tar xzf kitten-tts-models.tar.gz
 rm kitten-tts-models.tar.gz
 
+# 压缩包解压后是 models/kitten-tts-micro/，但程序期望的路径是 models/kitten/kitten-tts-micro/
+mkdir -p models/kitten
+mv models/kitten-tts-micro models/kitten/
+
 # ASR 模型（已包含在 install.sh 安装目录中）
 # install.sh 执行后模型位于 ./qwen3_asr_rs/Qwen3-ASR-0.6B/
+mv qwen3_asr_rs models/
 ```
 
-### 4. 运行 HiKid
+### 5. 运行 HiKid
 
 将 `HiKid.app` 拖入 Applications 文件夹即可使用。
 
@@ -102,13 +114,21 @@ SoX 未安装。运行：
 brew install sox
 ```
 
+### "espeak-ng not found" 或 TTS 服务器启动失败
+
+espeak-ng 未安装。运行：
+
+```bash
+brew install espeak-ng
+```
+
 ### "kitten-tts-server not found"
 
-TTS 服务器二进制文件缺失。按上面第 2 步安装。
+TTS 服务器二进制文件缺失。按上面第 3 步安装。
 
 ### "ASR model not found"
 
-模型文件缺失。按上面第 3 步下载模型，或启动应用后使用内置下载功能。
+模型文件缺失。按上面第 4 步下载模型，或启动应用后使用内置下载功能。
 
 ### 麦克风无响应
 

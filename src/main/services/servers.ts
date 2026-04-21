@@ -132,7 +132,13 @@ export async function startServers(config: ServerConfig): Promise<void> {
   const asrBin = resolveBin('asr-server')
   const ttsModel = config.ttsModelPath
   const asrModel = config.asrModelPath
-  const env = { ...process.env, RUST_LOG: 'off' }
+  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin'].join(':')
+  const currentPath = process.env.PATH || ''
+  const env = {
+    ...process.env,
+    RUST_LOG: 'off',
+    PATH: currentPath.includes('/opt/homebrew/bin') ? currentPath : `${extraPaths}:${currentPath}`
+  }
 
   console.log('Starting TTS server...')
   console.log(`  bin: ${ttsBin}`)

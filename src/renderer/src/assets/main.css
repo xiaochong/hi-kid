@@ -107,6 +107,8 @@ body * {
   animation: dropdown-fade 0.25s ease;
   backdrop-filter: blur(8px);
   min-width: 320px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
 }
 
 @keyframes dropdown-fade {

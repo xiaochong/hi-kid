@@ -86,7 +86,12 @@ export default function IdeasMenu({
                   onClick={() => handleGameClick(game)}
                   type="button"
                 >
-                  <span className={styles.gameName}>{game.name}</span>
+                  <span className={styles.gameName}>
+                    <span className={styles.gameIcon} aria-hidden="true">
+                      {game.icon}
+                    </span>
+                    {game.name}
+                  </span>
                   <span className={styles.gameDesc}>{game.description}</span>
                 </button>
               ))}
@@ -116,7 +121,12 @@ export default function IdeasMenu({
               </svg>
               <span>Back</span>
             </button>
-            <h3 className={styles.gameTitle}>{confirmingGame.name}</h3>
+            <h3 className={styles.gameTitle}>
+              <span className={styles.gameIconLarge} aria-hidden="true">
+                {confirmingGame.icon}
+              </span>
+              {confirmingGame.name}
+            </h3>
             <p className={styles.gameDescription}>{confirmingGame.description}</p>
             <div className={styles.rulesBox}>
               <span className={styles.rulesLabel}>How to play:</span>

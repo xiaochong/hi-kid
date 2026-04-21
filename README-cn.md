@@ -2,7 +2,7 @@
 
 # 🎈 HiKid
 
-> *Hi! I'm your AI English Pal. Let's talk!*
+> _Hi! I'm your AI English Pal. Let's talk!_
 
 [![Electron](https://img.shields.io/badge/Electron-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
@@ -85,12 +85,12 @@ HiKid 的语音对话是一条完整的 **本地流水线**：
 SoX(play) 播放 PCM 音频 ←─ TTS 服务器 语音合成 ←─ LLM 生成回复
 ```
 
-| 组件 | 职责 |
-|------|------|
-| **SoX** | 音频录制、播放、格式转换与分析 |
-| **kitten-tts-server** | 本地语音合成 (TTS)，SSE 流式返回 PCM |
-| **asr-server** | 本地语音识别 (ASR)，基于 Qwen3-ASR-0.6B |
-| **Ollama** | 本地大语言模型，默认 `qwen3:0.6b` |
+| 组件                  | 职责                                    |
+| --------------------- | --------------------------------------- |
+| **SoX**               | 音频录制、播放、格式转换与分析          |
+| **kitten-tts-server** | 本地语音合成 (TTS)，SSE 流式返回 PCM    |
+| **asr-server**        | 本地语音识别 (ASR)，基于 Qwen3-ASR-0.6B |
+| **Ollama**            | 本地大语言模型，默认 `qwen3:0.6b`       |
 
 项目结构：
 
@@ -113,16 +113,16 @@ src/
 
 HiKid 站在巨人的肩膀上：
 
-| 项目 | 用途 |
-|------|------|
-| [Electron](https://www.electronjs.org/) | 跨平台桌面应用框架 |
-| [React](https://react.dev/) | 用户界面构建 |
-| [Vite](https://vitejs.dev/) | 极速构建工具 |
+| 项目                                                                                     | 用途                   |
+| ---------------------------------------------------------------------------------------- | ---------------------- |
+| [Electron](https://www.electronjs.org/)                                                  | 跨平台桌面应用框架     |
+| [React](https://react.dev/)                                                              | 用户界面构建           |
+| [Vite](https://vitejs.dev/)                                                              | 极速构建工具           |
 | [@mariozechner/pi-agent-core](https://www.npmjs.com/package/@mariozechner/pi-agent-core) | Agent 编排与事件流框架 |
-| [kitten-tts-server](https://github.com/second-state/kitten_tts_rs) | 本地语音合成引擎 |
-| [Qwen3-ASR-0.6B](https://github.com/QwenLM/Qwen3) | 本地语音识别模型 |
-| [Ollama](https://ollama.com/) | 本地大语言模型运行环境 |
-| [animal-island-ui](https://github.com/guokaigdg/animal-island-ui) | 可爱的 UI 组件 |
+| [kitten-tts-server](https://github.com/second-state/kitten_tts_rs)                       | 本地语音合成引擎       |
+| [Qwen3-ASR-0.6B](https://github.com/QwenLM/Qwen3)                                        | 本地语音识别模型       |
+| [Ollama](https://ollama.com/)                                                            | 本地大语言模型运行环境 |
+| [animal-island-ui](https://github.com/guokaigdg/animal-island-ui)                        | 可爱的 UI 组件         |
 
 以及所有间接依赖它们的开发者们——是你们让开源世界如此精彩！
 

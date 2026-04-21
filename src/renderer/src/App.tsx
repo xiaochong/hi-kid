@@ -6,7 +6,7 @@ import TextToggle from '@renderer/components/TextToggle'
 import ChatBubbles from '@renderer/components/ChatBubbles'
 import DownloadScreen from '@renderer/components/DownloadScreen'
 import OnboardingScreen from '@renderer/components/OnboardingScreen'
-import TopicSuggestions from '@renderer/components/TopicSuggestions'
+import IdeasMenu from '@renderer/components/IdeasMenu'
 import { useConversation } from '@renderer/hooks/useConversation'
 import { useConfig } from '@renderer/hooks/useConfig'
 
@@ -79,7 +79,8 @@ function App(): React.JSX.Element {
     interrupt,
     setMode,
     clearError,
-    clearMessages
+    clearMessages,
+    addSystemMessage
   } = useConversation()
 
   const { config: appConfig } = useConfig()
@@ -170,6 +171,17 @@ function App(): React.JSX.Element {
     })
   }
 
+  const handleGameStart = async (game: { rules: string }): Promise<void> => {
+    addSystemMessage(game.rules)
+    try {
+      await window.api.sendMessage(game.rules)
+    } catch (err) {
+      console.error('Game start error:', err)
+      addSystemMessage("Oops, the game couldn't start. Let's try again!")
+    }
+    setTopicDropdownOpen(false)
+  }
+
   const showVoiceButton = mode === 'press-and-hold'
 
   const showSidebar = screen === 'conversation' && textEnabled
@@ -212,11 +224,13 @@ function App(): React.JSX.Element {
                 </button>
                 {topicDropdownOpen && (
                   <div className="topic-dropdown-panel">
-                    <TopicSuggestions
+                    <IdeasMenu
+                      key={topicDropdownOpen ? 'open' : 'closed'}
                       onTopicClick={(topic) => {
                         handleTopicClick(topic)
                         setTopicDropdownOpen(false)
                       }}
+                      onGameStart={handleGameStart}
                     />
                   </div>
                 )}

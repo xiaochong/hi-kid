@@ -25,7 +25,9 @@
   background: transparent;
   color: var(--ei-c-brown-soft);
   font-family: inherit;
-  cursor: url('/cursor-icon.png') 4 0, pointer;
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    pointer;
   transition: all 0.2s ease;
   outline: none;
 }
@@ -123,7 +125,9 @@
   font-family: inherit;
   font-size: 12px;
   font-weight: 600;
-  cursor: url('/cursor-icon.png') 4 0, pointer;
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    pointer;
   transition: all 0.2s ease;
 }
 
@@ -181,7 +185,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {

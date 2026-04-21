@@ -18,6 +18,7 @@ topic: customizable-ai-config
 ## Requirements
 
 **配置项**
+
 - R1. AI 名称：默认值为 `"Kitten"`，用户可自定义
 - R2. 系统提示词：默认值为英文对话伙伴提示词（`You are a friendly English conversation partner named Kitten...`，详见代码），用户可自定义
 - R3. LLM Base URL：默认值为 `http://localhost:11434/v1`，用户可自定义
@@ -25,6 +26,7 @@ topic: customizable-ai-config
 - R5. LLM Model Name：默认值为 `"qwen3:0.6b"`，用户可自定义
 
 **配置存储**
+
 - R6. 配置文件统一放在 `~/.config/hi-kid/config.json` 中（遵循现有代码使用的 `os.homedir() + '.config/hi-kid'` 路径模式，Windows 下为 `%APPDATA%\hi-kid\`），格式为 JSON，包含 `version` 字段（当前为 `1`）
 - R7. 配置文件以键值对形式存储，方便未来扩展更多配置项
 - R8. 启动时读取配置文件，不存在则使用默认值并自动生成；写入时使用原子写入（先写临时文件再 rename）以避免损坏
@@ -32,6 +34,7 @@ topic: customizable-ai-config
 - R8b. 若配置文件存在但格式错误或损坏，自动回退到默认值并重新生成有效配置文件
 
 **设置面板 UI**
+
 - R9. 在现有顶部设置区域（`SettingsPanel`）中添加配置入口，扩展为支持多 tab/多面板切换
 - R10. 配置编辑区提供清晰的表单：AI 名称（短文本输入）、系统提示词（多行文本输入）、Base URL（文本输入）、API Key（文本输入）、Model Name（文本输入）
 - R10a. AI 名称最大长度 32 字符，限制字符集（字母、数字、空格、常用标点）；Model Name 最大长度 128 字符，不允许控制字符
@@ -42,10 +45,12 @@ topic: customizable-ai-config
 - R13a. 表单首次加载时显示预填充的默认值（非 placeholder），加载期间有短暂骨架/占位状态
 
 **即时生效**
+
 - R14. AI 名称和系统提示词修改后在下次对话轮次生效，无需重启应用（当前进行中的对话轮次仍使用旧提示词）
 - R15. LLM 参数（base URL / API key / model）修改后，自动中断当前对话、重建 Agent 实例并使用新参数建立到 LLM provider 的 HTTP 连接（对话历史不保留）
 
 **UI 文本同步**
+
 - R16. OnboardingScreen、ChatBubbles 的空状态提示、DownloadScreen 等所有硬编码 `"Kitten"` 的 UI 文本必须从配置中读取 AI 名称并动态渲染
 
 ## Success Criteria
@@ -82,9 +87,11 @@ topic: customizable-ai-config
 ## Outstanding Questions
 
 ### Resolve Before Planning
+
 （无）
 
 ### Deferred to Planning
+
 - **R12 - Needs research**: 重建 Agent 时是否需要优雅中断当前 TTS 播放和 pending 请求？当前的 `agent.abort()` 和 `stopSpeaking()` 是否足够？
 - **R9 - Technical**: SettingsPanel 的 tab/面板切换交互模式选择：下拉菜单、tab bar 还是点击齿轮展开面板？
 

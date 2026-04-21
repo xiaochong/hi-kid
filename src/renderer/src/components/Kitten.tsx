@@ -78,13 +78,7 @@ export default function Kitten({ state }: KittenProps): React.JSX.Element {
       <g className={styles['kitten-mouth']}>
         {state === 'speaking' ? (
           <>
-            <circle
-              className={styles['mouth-o']}
-              cx="100"
-              cy="112"
-              r="4.5"
-              fill="#4A3728"
-            />
+            <circle className={styles['mouth-o']} cx="100" cy="112" r="4.5" fill="#4A3728" />
             <line
               className={styles['mouth-dash']}
               x1="95"

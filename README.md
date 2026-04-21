@@ -2,7 +2,7 @@
 
 # 🎈 HiKid
 
-> *Hi! I'm your AI English Pal. Let's talk!*
+> _Hi! I'm your AI English Pal. Let's talk!_
 
 [![Electron](https://img.shields.io/badge/Electron-47848F?style=flat-square&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
@@ -85,12 +85,12 @@ User speaks → SoX(rec) recording + VAD detection ──→ ASR server speech-t
 SoX(play) plays PCM audio ←─ TTS server speech synthesis ←─ LLM generates reply
 ```
 
-| Component | Role |
-|-----------|------|
-| **SoX** | Audio recording, playback, format conversion, and analysis |
-| **kitten-tts-server** | Local text-to-speech (TTS), streams PCM over SSE |
-| **asr-server** | Local automatic speech recognition (ASR), based on Qwen3-ASR-0.6B |
-| **Ollama** | Local large language model, default `qwen3:0.6b` |
+| Component             | Role                                                              |
+| --------------------- | ----------------------------------------------------------------- |
+| **SoX**               | Audio recording, playback, format conversion, and analysis        |
+| **kitten-tts-server** | Local text-to-speech (TTS), streams PCM over SSE                  |
+| **asr-server**        | Local automatic speech recognition (ASR), based on Qwen3-ASR-0.6B |
+| **Ollama**            | Local large language model, default `qwen3:0.6b`                  |
 
 Project structure:
 
@@ -113,16 +113,16 @@ Issues and PRs are welcome!
 
 HiKid stands on the shoulders of giants:
 
-| Project | Purpose |
-|---------|---------|
-| [Electron](https://www.electronjs.org/) | Cross-platform desktop app framework |
-| [React](https://react.dev/) | UI building |
-| [Vite](https://vitejs.dev/) | Fast build tool |
+| Project                                                                                  | Purpose                                           |
+| ---------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [Electron](https://www.electronjs.org/)                                                  | Cross-platform desktop app framework              |
+| [React](https://react.dev/)                                                              | UI building                                       |
+| [Vite](https://vitejs.dev/)                                                              | Fast build tool                                   |
 | [@mariozechner/pi-agent-core](https://www.npmjs.com/package/@mariozechner/pi-agent-core) | Agent orchestration and event streaming framework |
-| [kitten-tts-server](https://github.com/second-state/kitten_tts_rs) | Local speech synthesis engine |
-| [Qwen3-ASR-0.6B](https://github.com/QwenLM/Qwen3) | Local speech recognition model |
-| [Ollama](https://ollama.com/) | Local LLM runtime |
-| [animal-island-ui](https://github.com/guokaigdg/animal-island-ui) | Cute UI components |
+| [kitten-tts-server](https://github.com/second-state/kitten_tts_rs)                       | Local speech synthesis engine                     |
+| [Qwen3-ASR-0.6B](https://github.com/QwenLM/Qwen3)                                        | Local speech recognition model                    |
+| [Ollama](https://ollama.com/)                                                            | Local LLM runtime                                 |
+| [animal-island-ui](https://github.com/guokaigdg/animal-island-ui)                        | Cute UI components                                |
 
 And to all the developers who indirectly depend on them — thank you for making the open-source world so wonderful!
 

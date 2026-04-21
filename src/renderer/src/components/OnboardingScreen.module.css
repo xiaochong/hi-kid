@@ -96,15 +96,21 @@
   font-family: inherit;
   font-size: 16px;
   font-weight: 800;
-  cursor: url('/cursor-icon.png') 4 0, pointer;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 0 0 4px rgba(168, 230, 207, 0.3);
+  cursor:
+    url('/cursor-icon.png') 4 0,
+    pointer;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 0 0 4px rgba(168, 230, 207, 0.3);
   transition: all 0.2s ease;
   backdrop-filter: blur(4px);
 }
 
 .startBtn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 0 0 4px rgba(168, 230, 207, 0.5);
+  box-shadow:
+    0 6px 20px rgba(0, 0, 0, 0.15),
+    0 0 0 4px rgba(168, 230, 207, 0.5);
   background: linear-gradient(135deg, #fff, rgba(255, 255, 255, 0.95));
 }
 

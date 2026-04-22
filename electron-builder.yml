@@ -20,6 +20,7 @@ nsis:
   createDesktopShortcut: always
 mac:
   icon: icon.icns
+  entitlementsInherit: build/entitlements.mac.plist
   identity: null
   hardenedRuntime: false
   gatekeeperAssess: false

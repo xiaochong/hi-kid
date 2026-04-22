@@ -5,12 +5,19 @@ import SettingsPanel from '@renderer/components/SettingsPanel'
 import TextToggle from '@renderer/components/TextToggle'
 import ChatBubbles from '@renderer/components/ChatBubbles'
 import DownloadScreen from '@renderer/components/DownloadScreen'
+import DepsSetupScreen from '@renderer/components/DepsSetupScreen'
 import OnboardingScreen from '@renderer/components/OnboardingScreen'
 import IdeasMenu from '@renderer/components/IdeasMenu'
 import { useConversation } from '@renderer/hooks/useConversation'
 import { useConfig } from '@renderer/hooks/useConfig'
 
-type Screen = 'loading' | 'download' | 'onboarding' | 'conversation'
+type Screen = 'loading' | 'deps-setup' | 'download' | 'onboarding' | 'conversation'
+
+interface DepsState {
+  sox: boolean
+  espeakNg: boolean
+  ollama: boolean
+}
 
 interface DownloadProgress {
   bytes: number
@@ -65,6 +72,7 @@ function App(): React.JSX.Element {
   })
   const [topicDropdownOpen, setTopicDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const [deps, setDeps] = useState<DepsState>({ sox: true, espeakNg: true, ollama: true })
 
   const {
     kittenState,
@@ -116,9 +124,21 @@ function App(): React.JSX.Element {
       setDownloadProgress(progress)
     })
 
-    // Auto-check models on mount
+    // Auto-check dependencies and models on mount
     const checkAndStart = async (): Promise<void> => {
       try {
+        // Step 1: Check system dependencies
+        setStatusMessage('Checking dependencies...')
+        const depsResult = await window.api.checkDependencies()
+        setDeps(depsResult)
+
+        if (!depsResult.sox || !depsResult.espeakNg) {
+          setScreen('deps-setup')
+          setStatusMessage('Missing system dependencies')
+          return
+        }
+
+        // Step 2: Check models / binaries
         setStatusMessage('Checking models...')
         const { exists } = await window.api.checkModels()
         if (exists) {
@@ -154,6 +174,36 @@ function App(): React.JSX.Element {
     }
   }
 
+  const handleDepsResolved = async (): Promise<void> => {
+    setScreen('loading')
+    setStatusMessage('Re-checking dependencies...')
+    try {
+      const depsResult = await window.api.checkDependencies()
+      setDeps(depsResult)
+
+      if (!depsResult.sox || !depsResult.espeakNg) {
+        setScreen('deps-setup')
+        setStatusMessage('Still missing dependencies')
+        return
+      }
+
+      // Continue to model check
+      setStatusMessage('Checking models...')
+      const { exists } = await window.api.checkModels()
+      if (exists) {
+        setStatusMessage('Starting services...')
+        await window.api.startServices()
+      } else {
+        setStatusMessage('Downloading models...')
+        setScreen('download')
+        await window.api.startDownload()
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setStatusMessage(`Startup error: ${message}`)
+    }
+  }
+
   const handleToggleText = (): void => {
     const next = !textEnabled
     setTextEnabled(next)
@@ -180,6 +230,26 @@ function App(): React.JSX.Element {
       addSystemMessage("Oops, the game couldn't start. Let's try again!")
     }
     setTopicDropdownOpen(false)
+  }
+
+  const handleCancelDownload = async (): Promise<void> => {
+    try {
+      await window.api.cancelDownload()
+      setStatusMessage('Download cancelled')
+    } catch (err) {
+      console.error('Cancel download error:', err)
+    }
+  }
+
+  const handleResumeDownload = async (): Promise<void> => {
+    setStatusMessage('Resuming download...')
+    setScreen('download')
+    try {
+      await window.api.startDownload()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      setStatusMessage(`Download error: ${message}`)
+    }
   }
 
   const showVoiceButton = mode === 'press-and-hold'
@@ -346,13 +416,54 @@ function App(): React.JSX.Element {
             </>
           )}
 
-          {screen === 'download' && (
-            <DownloadScreen
-              bytes={downloadProgress.bytes}
-              total={downloadProgress.total}
-              currentFile={downloadProgress.currentFile}
+          {screen === 'deps-setup' && (
+            <DepsSetupScreen
+              missingSox={!deps.sox}
+              missingEspeakNg={!deps.espeakNg}
+              onCheckAgain={handleDepsResolved}
               aiName={aiName}
             />
+          )}
+
+          {screen === 'download' && (
+            <>
+              <DownloadScreen
+                bytes={downloadProgress.bytes}
+                total={downloadProgress.total}
+                currentFile={downloadProgress.currentFile}
+                aiName={aiName}
+              />
+              <div
+                className="download-actions"
+                style={{
+                  display: 'flex',
+                  gap: '12px',
+                  justifyContent: 'center',
+                  marginTop: '16px'
+                }}
+              >
+                {downloadProgress.currentFile !== 'Complete!' &&
+                  downloadProgress.currentFile !== '' && (
+                    <button
+                      className="start-services-btn"
+                      onClick={handleCancelDownload}
+                      type="button"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                {(downloadProgress.currentFile === '' ||
+                  downloadProgress.currentFile === 'Complete!') && (
+                  <button
+                    className="start-services-btn"
+                    onClick={handleResumeDownload}
+                    type="button"
+                  >
+                    Resume Download
+                  </button>
+                )}
+              </div>
+            </>
           )}
 
           {screen === 'onboarding' && (

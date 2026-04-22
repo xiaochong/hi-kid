@@ -10,6 +10,9 @@ const api = {
   resetConversation: (): Promise<void> => ipcRenderer.invoke('agent:reset'),
   checkModels: (): Promise<{ exists: boolean }> => ipcRenderer.invoke('models:check'),
   startDownload: (): Promise<void> => ipcRenderer.invoke('models:download'),
+  cancelDownload: (): Promise<void> => ipcRenderer.invoke('models:download:cancel'),
+  checkDependencies: (): Promise<{ sox: boolean; espeakNg: boolean; ollama: boolean }> =>
+    ipcRenderer.invoke('deps:check'),
   startRecording: (): Promise<boolean> => ipcRenderer.invoke('recorder:start'),
   stopRecording: (): Promise<void> => ipcRenderer.invoke('recorder:stop'),
   getConfig: (): Promise<{

@@ -1,6 +1,6 @@
 import { spawn, execSync, type ChildProcess } from 'child_process'
 import fs from 'fs'
-import { findSoxTool } from './servers'
+import { findSoxTool } from './deps'
 
 // VAD: start when above threshold for 0.2s, stop when below threshold for 0.8s
 export const SILENCE_ABOVE = '1.5%'

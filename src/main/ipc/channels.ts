@@ -17,8 +17,15 @@ import {
   analyzeAudio,
   MIN_VALID_RMS
 } from '../services/recorder'
-import { checkModelsExist, downloadModels, type DownloadConfig } from '../services/download'
+import {
+  checkModelsExist,
+  downloadModels,
+  downloadAndExtractArchives,
+  type DownloadConfig
+} from '../services/download'
+import { getInstallManifest } from '../services/releases'
 import { loadConfig, saveConfig, type AppConfig } from '../services/config'
+import { checkSystemDeps } from '../services/deps'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -82,6 +89,16 @@ const RECORDING_FILE = path.join(TMP_DIR, 'recording.wav')
 
 let servicesReady = false
 let downloadInProgress = false
+let abortController: AbortController | null = null
+
+function hasLegacyEnvUrls(): boolean {
+  return !!(
+    process.env.TTS_MODEL_DOWNLOAD_URL ||
+    process.env.ASR_MODEL_DOWNLOAD_URL ||
+    process.env.TTS_BIN_DOWNLOAD_URL ||
+    process.env.ASR_BIN_DOWNLOAD_URL
+  )
+}
 
 function getDownloadConfig(): DownloadConfig {
   // Model download URLs can be configured via environment variables
@@ -155,6 +172,12 @@ function getDownloadConfig(): DownloadConfig {
     ],
     userDataPath: HI_KID_DIR
   }
+}
+
+function checkAllAssetsExist(): boolean {
+  const manifest = getInstallManifest(BIN_DIR, MODELS_BASE_DIR)
+  const allFiles = [...manifest.directDownloads, ...manifest.archives.flatMap((a) => a.entries)]
+  return allFiles.every((f) => fs.existsSync(f.localPath))
 }
 
 function getMainWindow(): BrowserWindow | null {
@@ -330,30 +353,106 @@ export function registerIpcChannels(): void {
   })
 
   ipcMain.handle('models:check', async () => {
-    const downloadConfig = getDownloadConfig()
-    const exists = checkModelsExist(downloadConfig)
+    if (hasLegacyEnvUrls()) {
+      const downloadConfig = getDownloadConfig()
+      const exists = checkModelsExist(downloadConfig)
+      return { exists }
+    }
+    const exists = checkAllAssetsExist()
     return { exists }
   })
 
   ipcMain.handle('models:download', async () => {
     if (downloadInProgress) return
     downloadInProgress = true
+    abortController = new AbortController()
 
     try {
-      const downloadConfig = getDownloadConfig()
-      await downloadModels(downloadConfig, (progress) => {
-        sendToRenderer('download:progress', progress)
-      })
+      if (hasLegacyEnvUrls()) {
+        const downloadConfig = getDownloadConfig()
+        await downloadModels(
+          downloadConfig,
+          (progress) => {
+            sendToRenderer('download:progress', progress)
+          },
+          abortController.signal
+        )
+      } else {
+        const manifest = getInstallManifest(BIN_DIR, MODELS_BASE_DIR)
+        const totalSize = [...manifest.directDownloads, ...manifest.archives].reduce(
+          (sum, item) => sum + (item.size || 0),
+          0
+        )
+        let completedBytes = 0
 
-      // After download completes, auto-start services
-      await startServicesInternal()
+        const reportProgress = (bytes: number, _total: number, currentFile: string): void => {
+          sendToRenderer('download:progress', {
+            bytes: completedBytes + bytes,
+            total: totalSize,
+            currentFile
+          })
+        }
+
+        // Download direct files
+        const directConfig: DownloadConfig = {
+          models: manifest.directDownloads.map((d) => ({
+            name: d.name,
+            url: d.url,
+            localPath: d.localPath,
+            size: d.size,
+            executable: d.executable
+          })),
+          userDataPath: HI_KID_DIR
+        }
+        await downloadModels(
+          directConfig,
+          (progress) => {
+            reportProgress(progress.bytes, progress.total, progress.currentFile)
+          },
+          abortController.signal
+        )
+        completedBytes += manifest.directDownloads.reduce((sum, d) => sum + (d.size || 0), 0)
+
+        if (!abortController.signal.aborted) {
+          // Download and extract archives
+          await downloadAndExtractArchives(
+            manifest.archives,
+            (bytes, _total, currentFile) => {
+              reportProgress(bytes, _total, currentFile)
+            },
+            abortController.signal
+          )
+          completedBytes += manifest.archives.reduce((sum, a) => sum + (a.size || 0), 0)
+        }
+      }
+
+      if (!abortController.signal.aborted) {
+        // After download completes, auto-start services
+        await startServicesInternal()
+      }
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err)
-      console.error('Download failed:', message)
-      sendFairyTaleError('DOWNLOAD_FAILED')
+      if (abortController?.signal.aborted) {
+        console.log('Download cancelled by user')
+      } else {
+        const message = err instanceof Error ? err.message : String(err)
+        console.error('Download failed:', message)
+        sendFairyTaleError('DOWNLOAD_FAILED')
+      }
     } finally {
       downloadInProgress = false
+      abortController = null
     }
+  })
+
+  ipcMain.handle('models:download:cancel', () => {
+    if (abortController) {
+      abortController.abort()
+    }
+  })
+
+  ipcMain.handle('deps:check', async () => {
+    const deps = await checkSystemDeps()
+    return deps
   })
 
   // --- Recorder handlers ---

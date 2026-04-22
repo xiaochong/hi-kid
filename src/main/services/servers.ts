@@ -1,6 +1,7 @@
 import { spawn, type ChildProcess, execSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
+import { checkSoxTools } from './deps'
 
 export interface ServerConfig {
   ttsPort: number
@@ -61,34 +62,6 @@ function isProcessAlive(proc: ChildProcess | null): boolean {
   } catch {
     return false
   }
-}
-
-export function findSoxTool(name: string): string | null {
-  // Try PATH first
-  try {
-    return execSync(`which ${name}`, { encoding: 'utf-8' }).trim()
-  } catch {
-    // PATH didn't include Homebrew; check common install locations
-    const candidates = [
-      `/opt/homebrew/bin/${name}`,
-      `/usr/local/bin/${name}`,
-      `/opt/local/bin/${name}`
-    ]
-    for (const c of candidates) {
-      if (fs.existsSync(c)) return c
-    }
-    return null
-  }
-}
-
-function checkSoxTools(): string[] {
-  const missing: string[] = []
-  for (const cmd of ['rec', 'sox', 'play']) {
-    if (!findSoxTool(cmd)) {
-      missing.push(cmd)
-    }
-  }
-  return missing
 }
 
 export async function startServers(config: ServerConfig): Promise<void> {

@@ -19,6 +19,8 @@ interface Api {
   resetConversation(): Promise<void>
   checkModels(): Promise<{ exists: boolean }>
   startDownload(): Promise<void>
+  cancelDownload(): Promise<void>
+  checkDependencies(): Promise<{ sox: boolean; espeakNg: boolean; ollama: boolean }>
   startRecording(): Promise<boolean>
   stopRecording(): Promise<void>
   getConfig(): Promise<ConfigData>

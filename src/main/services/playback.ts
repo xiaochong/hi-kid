@@ -1,5 +1,5 @@
 import { spawn, type ChildProcess } from 'child_process'
-import { findSoxTool } from './servers'
+import { findSoxTool } from './deps'
 
 let currentPlayProcess: ChildProcess | null = null
 

@@ -18,6 +18,7 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:win": "npm run build && electron-builder --win",
     "build:mac": "electron-vite build && electron-builder --mac",
+    "install:deps": "bash scripts/install-dependencies.sh",
     "build:mac:bundled": "node scripts/prepare-bundled.js && electron-vite build && electron-builder --mac --config electron-builder.bundled.yml",
     "build:linux": "electron-vite build && electron-builder --linux"
   },

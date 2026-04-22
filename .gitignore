@@ -6,7 +6,6 @@ out
 *.log*
 .idea
 .vscode
-build
 .env
 resources/bin
 resources/models

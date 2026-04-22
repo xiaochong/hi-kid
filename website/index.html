@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HiKid - Your AI English Pal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="#" class="logo">
+        <img src="assets/icon.svg" alt="HiKid" width="40" height="40">
+        <span class="logo-text">HiKid</span>
+      </a>
+      <nav class="nav">
+        <a href="#features" data-i18n="nav_features">功能亮点</a>
+        <a href="#install" data-i18n="nav_install">安装说明</a>
+        <a href="#config" data-i18n="nav_config">配置</a>
+        <a href="#download" data-i18n="nav_download">下载</a>
+      </nav>
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">
+        <span class="lang-current" id="langCurrent">ZH</span>
+        <span class="lang-arrow">&#8594;</span>
+        <span class="lang-next" id="langNext">EN</span>
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero -->
+    <section class="hero" id="hero">
+      <div class="container hero-inner">
+        <div class="hero-badge">
+          <span data-i18n="hero_badge">完全免费 &middot; 开源 &middot; 离线运行</span>
+        </div>
+        <h1 class="hero-title">
+          <span data-i18n="hero_title">HiKid</span>
+        </h1>
+        <p class="hero-tagline" data-i18n="hero_tagline">你的 AI 英语小伙伴</p>
+        <p class="hero-subtitle" data-i18n="hero_subtitle">专为非英语国家儿童设计的桌面应用，让练习英语口语变得像聊天一样轻松有趣。</p>
+        <div class="hero-actions">
+          <a href="#download" class="btn btn-primary" data-i18n="hero_cta">立即下载</a>
+          <a href="https://github.com/xiaochong/hi-kid" target="_blank" rel="noopener" class="btn btn-secondary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            <span data-i18n="hero_github">GitHub</span>
+          </a>
+        </div>
+        <div class="hero-preview">
+          <img src="assets/preview1.png" alt="HiKid App Preview" loading="lazy" class="preview-img preview-main">
+          <img src="assets/preview2.png" alt="HiKid Chat Preview" loading="lazy" class="preview-img preview-secondary">
+        </div>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features" id="features">
+      <div class="container">
+        <h2 class="section-title" data-i18n="features_title">为什么选择 HiKid？</h2>
+        <div class="features-grid">
+          <div class="feature-card card-pink">
+            <div class="feature-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+            </div>
+            <h3 data-i18n="feature1_title">开口就能聊</h3>
+            <p data-i18n="feature1_desc">不需要打字，直接对着麦克风说话，AI 就能听懂并回复你。</p>
+          </div>
+          <div class="feature-card card-mint">
+            <div class="feature-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 data-i18n="feature2_title">隐私安全</h3>
+            <p data-i18n="feature2_desc">对话、语音和模型全部在本地运行，不上传任何数据到云端。</p>
+          </div>
+          <div class="feature-card card-yellow">
+            <div class="feature-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+            </div>
+            <h3 data-i18n="feature3_title">无需联网</h3>
+            <p data-i18n="feature3_desc">录音、识别、合成和对话全部通过本地流水线完成，没有网络也能用。</p>
+          </div>
+          <div class="feature-card card-blue">
+            <div class="feature-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+            </div>
+            <h3 data-i18n="feature4_title">可爱界面</h3>
+            <p data-i18n="feature4_desc">灵感来自《动物森友会》的卡通风格，孩子们一定会喜欢。</p>
+          </div>
+          <div class="feature-card card-peach">
+            <div class="feature-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <h3 data-i18n="feature5_title">聪明又耐心</h3>
+            <p data-i18n="feature5_desc">聊什么都行，说得慢或说得简单都没关系，AI 会耐心地陪你练习。</p>
+          </div>
+          <div class="feature-card card-pinksoft">
+            <div class="feature-icon">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h3 data-i18n="feature6_title">讲故事、玩游戏</h3>
+            <p data-i18n="feature6_desc">不只是对话练习，还可以听故事、玩单词游戏，让学习不再枯燥。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Installation -->
+    <section class="install" id="install">
+      <div class="container">
+        <h2 class="section-title" data-i18n="install_title">简单三步，开始对话</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3 data-i18n="step1_title">下载 dmg</h3>
+              <p data-i18n="step1_desc">从 GitHub Releases 下载最新版本的 HiKid 安装包。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3 data-i18n="step2_title">拖拽安装</h3>
+              <p data-i18n="step2_desc">打开 dmg 文件，将 HiKid 图标拖入 Applications 文件夹。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3 data-i18n="step3_title">一键启动</h3>
+              <p data-i18n="step3_desc">第一次打开时，HiKid 会自动检测并下载所需依赖，无需手动配置。</p>
+            </div>
+          </div>
+        </div>
+        <div class="install-note">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <p data-i18n="install_note">首次启动 macOS 可能会阻止未签名应用。如遇提示，在终端运行 <code>xattr -cr /Applications/HiKid.app</code> 即可解决。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- LLM Config -->
+    <section class="llm-config" id="config">
+      <div class="container">
+        <h2 class="section-title" data-i18n="config_title">AI 后端配置</h2>
+        <div class="config-grid">
+          <div class="config-card card-mint">
+            <div class="config-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.66 0 3-4.03 3-9s-1.34-9-3-9m0 18c-1.66 0-3-4.03-3-9s1.34-9 3-9m-9 9a9 9 0 0 1 9-9"/></svg>
+            </div>
+            <h3 data-i18n="config_default_title">默认：Ollama 本地运行</h3>
+            <p data-i18n="config_default_desc">HiKid 默认连接本地 Ollama 服务，使用 qwen3:0.6b 模型。所有对话完全在本地进行，无需 API Key。</p>
+            <div class="config-code">
+              <code>ollama run qwen3:0.6b</code>
+            </div>
+          </div>
+          <div class="config-card card-blue">
+            <div class="config-icon">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <h3 data-i18n="config_custom_title">自定义：其他 LLM 后端</h3>
+            <p data-i18n="config_custom_desc">你也可以在应用设置中配置自己的 LLM 后端，支持任何兼容 OpenAI API 的服务。</p>
+            <ul class="config-list">
+              <li data-i18n="config_item1">API Endpoint 地址</li>
+              <li data-i18n="config_item2">模型名称</li>
+              <li data-i18n="config_item3">API Key</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download -->
+    <section class="download" id="download">
+      <div class="container download-inner">
+        <div class="download-icon">
+          <img src="assets/icon.svg" alt="HiKid" width="80" height="80">
+        </div>
+        <h2 class="section-title" data-i18n="download_title">准备好开始了吗？</h2>
+        <p class="download-subtitle" data-i18n="download_subtitle">下载 HiKid，和 AI 一起练习英语吧！</p>
+        <div class="download-meta">
+          <span class="meta-badge">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            macOS
+          </span>
+          <span class="meta-text" data-i18n="download_requirements">macOS 12.0+ &middot; Apple Silicon</span>
+        </div>
+        <a href="https://github.com/xiaochong/hi-kid/releases" target="_blank" rel="noopener" class="btn btn-download">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="download_btn">下载 macOS 版</span>
+        </a>
+        <p class="download-version">v0.1.0</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-copy">&copy; 2026 HiKid</p>
+      <div class="footer-links">
+        <a href="https://github.com/xiaochong/hi-kid" target="_blank" rel="noopener">GitHub</a>
+      </div>
+      <p class="footer-made" data-i18n="footer_made">Made with love for kids around the world</p>
+    </div>
+  </footer>
+
+  <script src="lang.js"></script>
+</body>
+</html>

@@ -851,6 +851,17 @@ body * {
   white-space: nowrap;
 }
 
+.download-error {
+  color: #c44;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.download-progress-fill-error {
+  background: linear-gradient(90deg, var(--ei-c-pink) 0%, #e88 100%);
+}
+
 /* Settings panel */
 .settings-panel {
   display: flex;

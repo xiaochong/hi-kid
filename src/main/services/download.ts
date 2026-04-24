@@ -126,7 +126,7 @@ export function downloadFile(
       redirectCount: number
     ): void {
       if (redirectCount > 5) {
-        reject(new Error(`Too many redirects for ${model.name}`))
+        reject(new Error('Too many redirects'))
         return
       }
 
@@ -143,7 +143,7 @@ export function downloadFile(
         ) {
           const location = res.headers.location
           if (!location) {
-            reject(new Error(`HTTP ${res.statusCode} missing Location for ${model.name}`))
+            reject(new Error(`HTTP ${res.statusCode} missing Location`))
             return
           }
           // Follow redirect; keep Range header for 307/308, drop for 301/302/303
@@ -155,7 +155,7 @@ export function downloadFile(
         }
 
         if (res.statusCode !== 200 && res.statusCode !== 206) {
-          reject(new Error(`HTTP ${res.statusCode} for ${model.name}`))
+          reject(new Error(`HTTP ${res.statusCode}`))
           return
         }
 
@@ -200,7 +200,7 @@ export function downloadFile(
               total,
               lastModified: res.headers['last-modified'] || new Date().toISOString()
             })
-            reject(new Error(`Incomplete download for ${model.name}`))
+            reject(new Error('Incomplete download'))
             return
           }
 
@@ -235,7 +235,7 @@ export function downloadFile(
 
       req.setTimeout(120000, () => {
         req.destroy()
-        reject(new Error(`Timeout downloading ${model.name}`))
+        reject(new Error('Connection timed out'))
       })
     }
 
@@ -320,9 +320,8 @@ export async function downloadModels(
         }
         retries++
         if (retries >= maxRetries) {
-          throw new Error(
-            `Failed to download ${model.name} after ${maxRetries} attempts: ${err instanceof Error ? err.message : String(err)}`
-          )
+          const reason = err instanceof Error ? err.message : String(err)
+          throw new Error(`${model.name}: ${reason} (tried ${maxRetries} times)`)
         }
         // Wait before retry
         await new Promise((r) => setTimeout(r, 3000))
@@ -406,15 +405,20 @@ export async function downloadAndExtractArchives(
 
         ensureDir(path.dirname(entry.localPath))
 
-        if (archive.type === 'tar.gz') {
-          await extractTarEntry(archivePath, entry.archivePath, tempDir)
-        } else {
-          await extractZipEntry(archivePath, entry.archivePath, tempDir)
+        try {
+          if (archive.type === 'tar.gz') {
+            await extractTarEntry(archivePath, entry.archivePath, tempDir)
+          } else {
+            await extractZipEntry(archivePath, entry.archivePath, tempDir)
+          }
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : String(err)
+          throw new Error(`${archive.name}: ${reason}`)
         }
 
         const extractedPath = path.join(tempDir, entry.archivePath)
         if (!fs.existsSync(extractedPath)) {
-          throw new Error(`Expected file not found in archive: ${entry.archivePath}`)
+          throw new Error(`${archive.name}: Expected file not found in archive: ${entry.archivePath}`)
         }
 
         if (fs.existsSync(entry.localPath)) {

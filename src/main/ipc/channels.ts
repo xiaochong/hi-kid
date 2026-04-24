@@ -204,8 +204,9 @@ const FAIRY_TALE_ERRORS: Record<string, string> = {
   GENERIC: 'Oops, something unexpected happened!'
 }
 
-function sendFairyTaleError(type: string): void {
-  const message = FAIRY_TALE_ERRORS[type] ?? FAIRY_TALE_ERRORS.GENERIC
+function sendFairyTaleError(type: string, detail?: string): void {
+  const baseMessage = FAIRY_TALE_ERRORS[type] ?? FAIRY_TALE_ERRORS.GENERIC
+  const message = detail ? `${baseMessage} (${detail})` : baseMessage
   console.error('[Error]', message)
   sendToRenderer('error', { message })
 }
@@ -434,9 +435,9 @@ export function registerIpcChannels(): void {
       if (abortController?.signal.aborted) {
         console.log('Download cancelled by user')
       } else {
-        const message = err instanceof Error ? err.message : String(err)
-        console.error('Download failed:', message)
-        sendFairyTaleError('DOWNLOAD_FAILED')
+        const detail = err instanceof Error ? err.message : String(err)
+        console.error('Download failed:', detail)
+        sendFairyTaleError('DOWNLOAD_FAILED', detail)
       }
     } finally {
       downloadInProgress = false

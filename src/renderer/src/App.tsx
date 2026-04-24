@@ -10,6 +10,7 @@ import OnboardingScreen from '@renderer/components/OnboardingScreen'
 import IdeasMenu from '@renderer/components/IdeasMenu'
 import { useConversation } from '@renderer/hooks/useConversation'
 import { useConfig } from '@renderer/hooks/useConfig'
+import { t, detectedLocale } from '@shared/i18n'
 
 type Screen = 'loading' | 'deps-setup' | 'download' | 'onboarding' | 'conversation'
 
@@ -63,7 +64,7 @@ function markOnboarded(): void {
 
 function App(): React.JSX.Element {
   const [screen, setScreen] = useState<Screen>('loading')
-  const [statusMessage, setStatusMessage] = useState('Starting up...')
+  const [statusMessage, setStatusMessage] = useState(t('status.starting'))
   const [textEnabled, setTextEnabled] = useState<boolean>(loadTextEnabled)
   const [downloadProgress, setDownloadProgress] = useState<DownloadProgress>({
     bytes: 0,
@@ -75,7 +76,7 @@ function App(): React.JSX.Element {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [deps, setDeps] = useState<DepsState>({ sox: true, espeakNg: true, ollama: true })
   const screenRef = useRef<Screen>('loading')
-  screenRef.current = screen
+  const hasStartedRef = useRef(false)
 
   const {
     kittenState,
@@ -97,6 +98,16 @@ function App(): React.JSX.Element {
   const { config: appConfig } = useConfig()
   const aiName = appConfig?.aiName ?? 'Kitten'
 
+  // Set html lang attribute for locale-specific font selection
+  useEffect(() => {
+    document.documentElement.lang = detectedLocale === 'zh' ? 'zh-CN' : 'en'
+  }, [])
+
+  // Keep screenRef in sync (useEffect, not render, to comply with React 19 rules)
+  useEffect(() => {
+    screenRef.current = screen
+  }, [screen])
+
   // Close dropdown when clicking outside
   useEffect(() => {
     if (!topicDropdownOpen) return
@@ -112,10 +123,10 @@ function App(): React.JSX.Element {
   useEffect(() => {
     const unsubscribeStatus = window.api.onServiceStatus((status) => {
       if (status.ready) {
-        setStatusMessage('Ready!')
+        setStatusMessage(t('status.ready'))
         setScreen(hasOnboarded() ? 'conversation' : 'onboarding')
       } else {
-        setStatusMessage('Services stopped')
+        setStatusMessage(t('status.services_stopped'))
       }
     })
 
@@ -131,34 +142,38 @@ function App(): React.JSX.Element {
     })
 
     // Auto-check dependencies and models on mount
+    // Guard against React Strict Mode double-invoke
+    if (hasStartedRef.current) return
+    hasStartedRef.current = true
+
     const checkAndStart = async (): Promise<void> => {
       try {
         // Step 1: Check system dependencies
-        setStatusMessage('Checking dependencies...')
+        setStatusMessage(t('status.checking_deps'))
         const depsResult = await window.api.checkDependencies()
         setDeps(depsResult)
 
         if (!depsResult.sox || !depsResult.espeakNg) {
           setScreen('deps-setup')
-          setStatusMessage('Missing system dependencies')
+          setStatusMessage(t('status.missing_deps'))
           return
         }
 
         // Step 2: Check models / binaries
-        setStatusMessage('Checking models...')
+        setStatusMessage(t('status.checking_models'))
         const { exists } = await window.api.checkModels()
         if (exists) {
-          setStatusMessage('Starting services...')
+          setStatusMessage(t('status.starting_services'))
           await window.api.startServices()
         } else {
           setDownloadError(null)
-          setStatusMessage('Downloading models...')
+          setStatusMessage(t('status.downloading'))
           setScreen('download')
           await window.api.startDownload()
         }
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        setStatusMessage(`Startup error: ${message}`)
+        setStatusMessage(`${t('status.startup_error')}: ${message}`)
       }
     }
 
@@ -173,41 +188,41 @@ function App(): React.JSX.Element {
 
   const handleStartServices = async (): Promise<void> => {
     try {
-      setStatusMessage('Starting services...')
+      setStatusMessage(t('status.starting_services'))
       await window.api.startServices()
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      setStatusMessage(`Failed to start: ${message}`)
+      setStatusMessage(`${t('status.failed_to_start')}: ${message}`)
     }
   }
 
   const handleDepsResolved = async (): Promise<void> => {
     setScreen('loading')
-    setStatusMessage('Re-checking dependencies...')
+    setStatusMessage(t('status.rechecking_deps'))
     try {
       const depsResult = await window.api.checkDependencies()
       setDeps(depsResult)
 
       if (!depsResult.sox || !depsResult.espeakNg) {
         setScreen('deps-setup')
-        setStatusMessage('Still missing dependencies')
+        setStatusMessage(t('status.still_missing_deps'))
         return
       }
 
       // Continue to model check
-      setStatusMessage('Checking models...')
+      setStatusMessage(t('status.checking_models'))
       const { exists } = await window.api.checkModels()
       if (exists) {
-        setStatusMessage('Starting services...')
+        setStatusMessage(t('status.starting_services'))
         await window.api.startServices()
       } else {
-        setStatusMessage('Downloading models...')
+        setStatusMessage(t('status.downloading'))
         setScreen('download')
         await window.api.startDownload()
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      setStatusMessage(`Startup error: ${message}`)
+      setStatusMessage(`${t('status.startup_error')}: ${message}`)
     }
   }
 
@@ -242,7 +257,7 @@ function App(): React.JSX.Element {
   const handleCancelDownload = async (): Promise<void> => {
     try {
       await window.api.cancelDownload()
-      setStatusMessage('Download cancelled')
+      setStatusMessage(t('status.download_cancelled'))
     } catch (err) {
       console.error('Cancel download error:', err)
     }
@@ -250,13 +265,13 @@ function App(): React.JSX.Element {
 
   const handleResumeDownload = async (): Promise<void> => {
     setDownloadError(null)
-    setStatusMessage('Resuming download...')
+    setStatusMessage(t('status.resuming'))
     setScreen('download')
     try {
       await window.api.startDownload()
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      setStatusMessage(`Download error: ${message}`)
+      setStatusMessage(`${t('status.download_error')}: ${message}`)
     }
   }
 
@@ -265,11 +280,11 @@ function App(): React.JSX.Element {
   const showSidebar = screen === 'conversation' && textEnabled
 
   function getMicLabel(): string {
-    if (isRecording) return 'Listening...'
-    if (isProcessing || kittenState === 'thinking') return 'Thinking...'
-    if (kittenState === 'speaking') return 'Speaking...'
-    if (mode === 'vad') return 'Listening...'
-    return 'Hold to speak'
+    if (isRecording) return t('kitten.listening')
+    if (isProcessing || kittenState === 'thinking') return t('kitten.thinking')
+    if (kittenState === 'speaking') return t('kitten.speaking')
+    if (mode === 'vad') return t('kitten.listening')
+    return t('kitten.hold_to_speak')
   }
 
   return (
@@ -283,8 +298,8 @@ function App(): React.JSX.Element {
                   className={`topic-dropdown-btn ${topicDropdownOpen ? 'open' : ''}`}
                   onClick={() => setTopicDropdownOpen((prev) => !prev)}
                   type="button"
-                  aria-label="Topic suggestions"
-                  title="Topic suggestions"
+                  aria-label={t('ui.ideas')}
+                  title={t('ui.ideas')}
                 >
                   <svg
                     width="18"
@@ -298,7 +313,7 @@ function App(): React.JSX.Element {
                   >
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                   </svg>
-                  <span>Ideas</span>
+                  <span>{t('ui.ideas')}</span>
                 </button>
                 {topicDropdownOpen && (
                   <div className="topic-dropdown-panel">

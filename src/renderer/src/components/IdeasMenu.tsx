@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { type GameConfig } from '@renderer/data/games'
 import { TRY_SAYING_TOPICS, GAMES } from '@renderer/data/games'
 import styles from './IdeasMenu.module.css'
+import { t } from '@shared/i18n'
 
 interface IdeasMenuProps {
   onTopicClick: (text: string) => void
@@ -42,7 +43,7 @@ export default function IdeasMenu({
           }}
           type="button"
         >
-          Try Saying
+          {t('ui.try_saying')}
         </button>
         <button
           className={`${styles.tab} ${activeTab === 'games' ? styles.tabActiveGames : ''}`}
@@ -52,14 +53,14 @@ export default function IdeasMenu({
           }}
           type="button"
         >
-          Speaking Games
+          {t('ui.speaking_games')}
         </button>
       </div>
 
       <div className={styles.content}>
         {activeTab === 'topics' && (
           <div className={styles.topicsPanel}>
-            <span className={styles.hint}>Try saying:</span>
+            <span className={styles.hint}>{t('ui.try_saying_hint')}</span>
             <div className={styles.chips}>
               {TRY_SAYING_TOPICS.map((topic) => (
                 <button
@@ -77,7 +78,7 @@ export default function IdeasMenu({
 
         {activeTab === 'games' && !confirmingGame && (
           <div className={styles.gamesPanel}>
-            <span className={styles.hint}>Pick a game:</span>
+            <span className={styles.hint}>{t('ui.pick_game')}</span>
             <div className={styles.gameList}>
               {GAMES.map((game) => (
                 <button
@@ -119,7 +120,7 @@ export default function IdeasMenu({
               >
                 <path d="M19 12H5M12 19l-7-7 7-7" />
               </svg>
-              <span>Back</span>
+              <span>{t('ui.back')}</span>
             </button>
             <h3 className={styles.gameTitle}>
               <span className={styles.gameIconLarge} aria-hidden="true">
@@ -129,7 +130,7 @@ export default function IdeasMenu({
             </h3>
             <p className={styles.gameDescription}>{confirmingGame.description}</p>
             <div className={styles.rulesBox}>
-              <span className={styles.rulesLabel}>How to play:</span>
+              <span className={styles.rulesLabel}>{t('ui.how_to_play')}</span>
               <p className={styles.rulesText}>{confirmingGame.rules}</p>
             </div>
             <div className={styles.confirmActions}>
@@ -139,7 +140,7 @@ export default function IdeasMenu({
                 disabled={isStarting}
                 type="button"
               >
-                {isStarting ? 'Starting...' : 'Start'}
+                {isStarting ? t('ui.starting') : t('ui.start')}
               </button>
             </div>
           </div>

@@ -6,8 +6,18 @@ import icon from '../../resources/icon.png?asset'
 import { registerIpcChannels } from './ipc/channels'
 import { stopServers } from './services/servers'
 import { stopSpeaking } from './services/agent'
+import { setMainWindow } from './services/window'
+import { logger } from './services/logger'
+
+let cleanupDone = false
 
 function cleanup(): void {
+  if (cleanupDone) {
+    logger.debug('cleanup() already ran, skipping')
+    return
+  }
+  cleanupDone = true
+  logger.info('Shutting down services...')
   stopSpeaking()
   stopServers()
 }
@@ -28,6 +38,8 @@ function createWindow(): void {
     }
   })
 
+  setMainWindow(mainWindow)
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -35,6 +47,10 @@ function createWindow(): void {
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+
+  mainWindow.on('closed', () => {
+    setMainWindow(null)
   })
 
   // HMR for renderer base on electron-vite cli.
@@ -147,12 +163,15 @@ app.on('window-all-closed', () => {
   }
 })
 
-// Handle Ctrl+C / SIGTERM in dev mode (electron-vite HMR does not trigger before-quit)
-process.on('SIGINT', () => {
-  cleanup()
-  process.exit(0)
-})
-process.on('SIGTERM', () => {
-  cleanup()
-  process.exit(0)
-})
+// Handle Ctrl+C / SIGTERM in dev mode (electron-vite HMR does not trigger before-quit).
+// In production, Electron manages process lifecycle via before-quit / will-quit.
+if (is.dev) {
+  process.on('SIGINT', () => {
+    cleanup()
+    process.exit(0)
+  })
+  process.on('SIGTERM', () => {
+    cleanup()
+    process.exit(0)
+  })
+}

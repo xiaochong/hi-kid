@@ -28,5 +28,21 @@ export default defineConfig(
       ...eslintPluginReactRefresh.configs.vite.rules
     }
   },
+  // Legacy JS scripts: relax TS-specific rules
+  {
+    files: ['scripts/**/*.js', 'website/**/*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off'
+    }
+  },
+  // Test files: relaxed rules for vitest and test helpers
+  {
+    files: ['**/*.test.ts', '**/*.test.tsx', '**/test-setup.ts'],
+    rules: {
+      '@typescript-eslint/no-unused-expressions': 'off',
+      'react-refresh/only-export-components': 'off'
+    }
+  },
   eslintConfigPrettier
 )

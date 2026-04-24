@@ -418,7 +418,9 @@ export async function downloadAndExtractArchives(
 
         const extractedPath = path.join(tempDir, entry.archivePath)
         if (!fs.existsSync(extractedPath)) {
-          throw new Error(`${archive.name}: Expected file not found in archive: ${entry.archivePath}`)
+          throw new Error(
+            `${archive.name}: Expected file not found in archive: ${entry.archivePath}`
+          )
         }
 
         if (fs.existsSync(entry.localPath)) {

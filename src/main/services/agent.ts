@@ -1,18 +1,14 @@
 import { Agent, type AgentEvent, type StreamFn } from '@mariozechner/pi-agent-core'
 import type { Model, AssistantMessageEvent } from '@mariozechner/pi-ai'
-import { BrowserWindow } from 'electron'
 import { playSentence, stopPlayback } from './playback'
+import { getMainWindow } from './window'
+import { logger } from './logger'
 
 // --- State ---
 let activeTtsCount = 0
 let pendingTtsCount = 0
 let isConversationComplete = true
 let agentInstance: Agent | null = null
-
-function getMainWindow(): BrowserWindow | null {
-  const wins = BrowserWindow.getAllWindows()
-  return wins[0] ?? null
-}
 
 function sendToRenderer(channel: string, ...args: unknown[]): void {
   const win = getMainWindow()
@@ -121,7 +117,7 @@ function createTtsStreamFn(
         out.end(result)
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        console.error('[TTS Stream] error:', message)
+        logger.error('[TTS Stream] error:', message)
         if (!hasStreamError) {
           sendToRenderer('error', { message: unreachableHint })
         }
@@ -166,7 +162,7 @@ export async function createAgent(config: AgentConfig): Promise<Agent> {
       })
     })
   } catch {
-    // ignore warm-up errors
+    logger.warn('TTS warm-up failed (first sentence may have a slight delay)')
   }
 
   const model: Model<'openai-completions'> = {

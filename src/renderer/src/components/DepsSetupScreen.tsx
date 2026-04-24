@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Kitten from './Kitten'
+import { t } from '@shared/i18n'
 
 interface DepsSetupScreenProps {
   missingSox: boolean
@@ -17,8 +18,8 @@ export default function DepsSetupScreen({
   const [copied, setCopied] = useState(false)
 
   const missing: string[] = []
-  if (missingSox) missing.push('SoX (audio tools)')
-  if (missingEspeakNg) missing.push('espeak-ng (text-to-speech)')
+  if (missingSox) missing.push(t('deps.sox_tools'))
+  if (missingEspeakNg) missing.push(t('deps.espeak_ng'))
 
   const brewCommand = 'brew install sox espeak-ng'
 
@@ -45,7 +46,7 @@ export default function DepsSetupScreen({
       </div>
 
       <div className="download-status">
-        <h2 className="download-message">{aiName} needs a few tools first</h2>
+        <h2 className="download-message">{t('deps.title', { aiName })}</h2>
 
         <div
           style={{
@@ -56,7 +57,8 @@ export default function DepsSetupScreen({
           }}
         >
           <p style={{ fontSize: '16px', lineHeight: 1.6, marginBottom: '20px' }}>
-            Before {aiName} can chat, we need to install: <strong>{missing.join(' and ')}</strong>.
+            {t('deps.body', { aiName })}{' '}
+            <strong>{missing.join(' ' + t('deps.body_end') + ' ')}</strong>.
           </p>
 
           <div
@@ -102,13 +104,12 @@ export default function DepsSetupScreen({
               }}
               type="button"
             >
-              {copied ? 'Copied!' : 'Copy'}
+              {copied ? t('ui.copied') : t('ui.copy')}
             </button>
           </div>
 
           <p style={{ fontSize: '14px', color: '#6b4c3b', marginBottom: '24px' }}>
-            Open <strong>Terminal</strong>, paste the command above, press Enter, then come back
-            here.
+            {t('deps.terminal_hint', { term: t('deps.terminal') })}
           </p>
 
           <button
@@ -127,7 +128,7 @@ export default function DepsSetupScreen({
             onClick={onCheckAgain}
             type="button"
           >
-            I&apos;ve installed them
+            {t('deps.installed')}
           </button>
         </div>
       </div>

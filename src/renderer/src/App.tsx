@@ -70,9 +70,12 @@ function App(): React.JSX.Element {
     total: 0,
     currentFile: ''
   })
+  const [downloadError, setDownloadError] = useState<string | null>(null)
   const [topicDropdownOpen, setTopicDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const [deps, setDeps] = useState<DepsState>({ sox: true, espeakNg: true, ollama: true })
+  const screenRef = useRef<Screen>('loading')
+  screenRef.current = screen
 
   const {
     kittenState,
@@ -118,6 +121,9 @@ function App(): React.JSX.Element {
 
     const unsubscribeError = window.api.onError((data) => {
       setStatusMessage(`Error: ${data.message}`)
+      if (screenRef.current === 'download') {
+        setDownloadError(data.message)
+      }
     })
 
     const unsubscribeDownload = window.api.onDownloadProgress((progress) => {
@@ -145,6 +151,7 @@ function App(): React.JSX.Element {
           setStatusMessage('Starting services...')
           await window.api.startServices()
         } else {
+          setDownloadError(null)
           setStatusMessage('Downloading models...')
           setScreen('download')
           await window.api.startDownload()
@@ -242,6 +249,7 @@ function App(): React.JSX.Element {
   }
 
   const handleResumeDownload = async (): Promise<void> => {
+    setDownloadError(null)
     setStatusMessage('Resuming download...')
     setScreen('download')
     try {
@@ -432,6 +440,8 @@ function App(): React.JSX.Element {
                 total={downloadProgress.total}
                 currentFile={downloadProgress.currentFile}
                 aiName={aiName}
+                error={downloadError ?? undefined}
+                onRetry={handleResumeDownload}
               />
               <div
                 className="download-actions"

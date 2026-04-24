@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Kitten from './Kitten'
+import { t } from '@shared/i18n'
 
 interface DownloadScreenProps {
   bytes: number
@@ -14,7 +15,6 @@ export default function DownloadScreen({
   bytes,
   total,
   currentFile,
-  aiName = 'Kitten',
   error,
   onRetry
 }: DownloadScreenProps): React.JSX.Element {
@@ -31,14 +31,9 @@ export default function DownloadScreen({
   const percent = total > 0 ? Math.round((bytes / total) * 100) : 0
   const isComplete = percent >= 100 && !error
 
-  const messages = [
-    `${aiName} is getting ready`,
-    `${aiName} is unpacking toys`,
-    `${aiName} is brushing fur`,
-    'Almost there'
-  ]
-  const messageIndex = Math.min(Math.floor((percent / 100) * messages.length), messages.length - 1)
-  const message = isComplete ? 'All set! Starting up...' : messages[messageIndex] + dots
+  const messages = [t('status.downloading'), `${percent}% ${t('status.downloading')}`]
+  const messageIndex = percent > 0 && percent < 100 ? 1 : 0
+  const message = isComplete ? t('status.starting_services') : messages[messageIndex] + dots
 
   return (
     <div className="download-screen">
@@ -58,7 +53,7 @@ export default function DownloadScreen({
             </div>
             {onRetry && (
               <button className="start-services-btn" onClick={onRetry} type="button">
-                Try Again
+                {t('ui.retry')}
               </button>
             )}
           </>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useConfig } from '@renderer/hooks/useConfig'
 import styles from './SettingsPanel.module.css'
+import { t } from '@shared/i18n'
 
 interface SettingsPanelProps {
   mode: 'press-and-hold' | 'vad'
@@ -264,7 +265,7 @@ export default function SettingsPanel({
                   disabled={!isValid || saving}
                   type="button"
                 >
-                  {saving ? 'Saving...' : 'Save'}
+                  {saving ? t('ui.saving') : t('ui.save')}
                 </button>
               </div>
             </>

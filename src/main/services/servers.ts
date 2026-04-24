@@ -12,6 +12,7 @@ export interface ServerConfig {
 
 let ttsProcess: ChildProcess | null = null
 let asrProcess: ChildProcess | null = null
+let startPromise: Promise<void> | null = null
 
 function findInPath(name: string): string | null {
   try {
@@ -65,85 +66,97 @@ function isProcessAlive(proc: ChildProcess | null): boolean {
 }
 
 export async function startServers(config: ServerConfig): Promise<void> {
-  const missingSox = checkSoxTools()
-  if (missingSox.length > 0) {
-    throw new Error(
-      `Missing required audio tools: ${missingSox.join(', ')}. Please install SoX: brew install sox`
-    )
+  if (startPromise) {
+    return startPromise
   }
 
-  // If servers are already running, reuse them
-  if (isProcessAlive(ttsProcess) && isProcessAlive(asrProcess)) {
-    try {
-      const ttsRes = await fetch(`http://localhost:${config.ttsPort}/health`)
-      const asrRes = await fetch(`http://localhost:${config.asrPort}/health`)
-      if (ttsRes.ok && asrRes.ok) {
-        console.log('Servers already running, reusing existing processes')
-        return
-      }
-    } catch {
-      // fall through to restart
+  startPromise = (async () => {
+    const missingSox = checkSoxTools()
+    if (missingSox.length > 0) {
+      throw new Error(
+        `Missing required audio tools: ${missingSox.join(', ')}. Please install SoX: brew install sox`
+      )
     }
+
+    // If servers are already running, reuse them
+    if (isProcessAlive(ttsProcess) && isProcessAlive(asrProcess)) {
+      try {
+        const ttsRes = await fetch(`http://localhost:${config.ttsPort}/health`)
+        const asrRes = await fetch(`http://localhost:${config.asrPort}/health`)
+        if (ttsRes.ok && asrRes.ok) {
+          console.log('Servers already running, reusing existing processes')
+          return
+        }
+      } catch {
+        // fall through to restart
+      }
+    }
+
+    // Stop any lingering processes before starting fresh
+    stopServers()
+
+    // Check binaries exist before spawning
+    if (!checkBinaryExists('kitten-tts-server')) {
+      throw new Error(
+        'kitten-tts-server not found at ~/.config/hi-kid/bin/. Set TTS_BIN_DOWNLOAD_URL to download it, or place it manually.'
+      )
+    }
+    if (!checkBinaryExists('asr-server')) {
+      throw new Error(
+        'asr-server not found at ~/.config/hi-kid/bin/. Set ASR_BIN_DOWNLOAD_URL to download it, or place it manually.'
+      )
+    }
+
+    const ttsBin = resolveBin('kitten-tts-server')
+    const asrBin = resolveBin('asr-server')
+    const ttsModel = config.ttsModelPath
+    const asrModel = config.asrModelPath
+    const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin'].join(':')
+    const currentPath = process.env.PATH || ''
+    const env = {
+      ...process.env,
+      RUST_LOG: 'off',
+      PATH: currentPath.includes('/opt/homebrew/bin') ? currentPath : `${extraPaths}:${currentPath}`
+    }
+
+    console.log('Starting TTS server...')
+    console.log(`  bin: ${ttsBin}`)
+    console.log(`  model: ${ttsModel}`)
+    ttsProcess = spawn(ttsBin, [ttsModel, '--port', String(config.ttsPort)], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: process.cwd(),
+      env
+    })
+    ttsProcess.stdout?.on('data', (d: Buffer) => log('TTS', d))
+    ttsProcess.stderr?.on('data', (d: Buffer) => log('TTS', d))
+    ttsProcess.on('exit', (code) => {
+      if (code !== null && code !== 0) console.log(`[TTS] exited with code ${code}`)
+    })
+
+    console.log('Starting ASR server...')
+    console.log(`  bin: ${asrBin}`)
+    console.log(`  model: ${asrModel}`)
+    asrProcess = spawn(asrBin, ['--model-dir', asrModel, '--port', String(config.asrPort)], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      cwd: process.cwd(),
+      env
+    })
+    asrProcess.stdout?.on('data', (d: Buffer) => log('ASR', d))
+    asrProcess.stderr?.on('data', (d: Buffer) => log('ASR', d))
+    asrProcess.on('exit', (code) => {
+      if (code !== null && code !== 0) console.log(`[ASR] exited with code ${code}`)
+    })
+
+    await waitForServer(`http://localhost:${config.ttsPort}/health`, 'TTS')
+    await waitForServer(`http://localhost:${config.asrPort}/health`, 'ASR')
+    console.log('All servers ready!\n')
+  })()
+
+  try {
+    await startPromise
+  } finally {
+    startPromise = null
   }
-
-  // Stop any lingering processes before starting fresh
-  stopServers()
-
-  // Check binaries exist before spawning
-  if (!checkBinaryExists('kitten-tts-server')) {
-    throw new Error(
-      'kitten-tts-server not found at ~/.config/hi-kid/bin/. Set TTS_BIN_DOWNLOAD_URL to download it, or place it manually.'
-    )
-  }
-  if (!checkBinaryExists('asr-server')) {
-    throw new Error(
-      'asr-server not found at ~/.config/hi-kid/bin/. Set ASR_BIN_DOWNLOAD_URL to download it, or place it manually.'
-    )
-  }
-
-  const ttsBin = resolveBin('kitten-tts-server')
-  const asrBin = resolveBin('asr-server')
-  const ttsModel = config.ttsModelPath
-  const asrModel = config.asrModelPath
-  const extraPaths = ['/opt/homebrew/bin', '/usr/local/bin'].join(':')
-  const currentPath = process.env.PATH || ''
-  const env = {
-    ...process.env,
-    RUST_LOG: 'off',
-    PATH: currentPath.includes('/opt/homebrew/bin') ? currentPath : `${extraPaths}:${currentPath}`
-  }
-
-  console.log('Starting TTS server...')
-  console.log(`  bin: ${ttsBin}`)
-  console.log(`  model: ${ttsModel}`)
-  ttsProcess = spawn(ttsBin, [ttsModel, '--port', String(config.ttsPort)], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    cwd: process.cwd(),
-    env
-  })
-  ttsProcess.stdout?.on('data', (d: Buffer) => log('TTS', d))
-  ttsProcess.stderr?.on('data', (d: Buffer) => log('TTS', d))
-  ttsProcess.on('exit', (code) => {
-    if (code !== null && code !== 0) console.log(`[TTS] exited with code ${code}`)
-  })
-
-  console.log('Starting ASR server...')
-  console.log(`  bin: ${asrBin}`)
-  console.log(`  model: ${asrModel}`)
-  asrProcess = spawn(asrBin, ['--model-dir', asrModel, '--port', String(config.asrPort)], {
-    stdio: ['ignore', 'pipe', 'pipe'],
-    cwd: process.cwd(),
-    env
-  })
-  asrProcess.stdout?.on('data', (d: Buffer) => log('ASR', d))
-  asrProcess.stderr?.on('data', (d: Buffer) => log('ASR', d))
-  asrProcess.on('exit', (code) => {
-    if (code !== null && code !== 0) console.log(`[ASR] exited with code ${code}`)
-  })
-
-  await waitForServer(`http://localhost:${config.ttsPort}/health`, 'TTS')
-  await waitForServer(`http://localhost:${config.asrPort}/health`, 'ASR')
-  console.log('All servers ready!\n')
 }
 
 async function waitForServer(url: string, name: string, timeoutMs = 120_000): Promise<void> {

@@ -7,6 +7,12 @@ const srcModels = path.join(home, '.config', 'hi-kid', 'models')
 const destBin = path.join(__dirname, '..', 'resources', 'bin')
 const destModels = path.join(__dirname, '..', 'resources', 'models')
 
+/**
+ * Recursively copy a directory.
+ * @param {string} src - Source directory path
+ * @param {string} dest - Destination directory path
+ * @returns {void}
+ */
 function copyDir(src, dest) {
   if (!fs.existsSync(src)) {
     console.error(`Source not found: ${src}`)

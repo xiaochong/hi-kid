@@ -21,14 +21,12 @@ nsis:
 mac:
   icon: icon.icns
   entitlementsInherit: build/entitlements.mac.plist
-  identity: null
+  # Set to true before distribution: hardenedRuntime, gatekeeperAssess, notarize
   hardenedRuntime: false
   gatekeeperAssess: false
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
-    - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
-    - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
+    - NSCameraUsageDescription: HiKid needs camera access (future feature).
+    - NSMicrophoneUsageDescription: HiKid needs microphone access to listen and practice English with you.
   notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}

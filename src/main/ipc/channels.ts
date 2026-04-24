@@ -1,4 +1,4 @@
-import { ipcMain, BrowserWindow } from 'electron'
+import { ipcMain, app } from 'electron'
 import { startServers, stopServers, asrUrl, type ServerConfig } from '../services/servers'
 import {
   createAgent,
@@ -26,6 +26,13 @@ import {
 import { getInstallManifest } from '../services/releases'
 import { loadConfig, saveConfig, type AppConfig } from '../services/config'
 import { checkSystemDeps } from '../services/deps'
+import { getMainWindow } from '../services/window'
+import { logger } from '../services/logger'
+import { createI18n, type I18nFn, type I18nKey } from '../../shared/i18n'
+
+// Lazy i18n: initialized inside registerIpcChannels() after app.whenReady(),
+// so app.getLocale() reflects the real system language, not the terminal's LANG.
+let t: I18nFn = createI18n('en')
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
@@ -59,8 +66,7 @@ function getLlmConfig(): Pick<
 }
 
 const LLM_TIMEOUT_MS = parseInt(process.env.LLM_TIMEOUT_MS || '15000', 10)
-const LLM_UNREACHABLE_HINT =
-  process.env.LLM_UNREACHABLE_HINT || 'Ollama seems to be taking a nap. Make sure it is running!'
+let LLM_UNREACHABLE_HINT = process.env.LLM_UNREACHABLE_HINT || t('error.llm_unreachable')
 
 import { type Agent } from '@mariozechner/pi-agent-core'
 
@@ -180,11 +186,6 @@ function checkAllAssetsExist(): boolean {
   return allFiles.every((f) => fs.existsSync(f.localPath))
 }
 
-function getMainWindow(): BrowserWindow | null {
-  const wins = BrowserWindow.getAllWindows()
-  return wins[0] ?? null
-}
-
 function sendToRenderer(channel: string, ...args: unknown[]): void {
   const win = getMainWindow()
   if (win && !win.isDestroyed()) {
@@ -192,22 +193,23 @@ function sendToRenderer(channel: string, ...args: unknown[]): void {
   }
 }
 
-const FAIRY_TALE_ERRORS: Record<string, string> = {
-  ASR_EMPTY: 'My ears are sleepy, can you say it louder?',
-  LLM_TIMEOUT: "My brain got a little dizzy, let's try again!",
-  TTS_FAILURE: 'My voice is hiding, can you ask me something else?',
-  SERVICE_START: 'My toys are still waking up, please wait a moment!',
-  AGENT_NOT_READY: "I'm not ready yet, can you wait a little?",
-  ASR_SERVER: 'My ears are a bit confused, can you try again?',
-  DOWNLOAD_FAILED: 'Oops, something went wrong while getting my toys!',
-  NETWORK: 'The internet seems sleepy, can you try again?',
-  GENERIC: 'Oops, something unexpected happened!'
+const ERROR_I18N_KEYS: Record<string, string> = {
+  ASR_EMPTY: 'error.asr_empty',
+  LLM_TIMEOUT: 'error.llm_timeout',
+  TTS_FAILURE: 'error.tts_failure',
+  SERVICE_START: 'error.service_start',
+  AGENT_NOT_READY: 'error.agent_not_ready',
+  ASR_SERVER: 'error.asr_server',
+  DOWNLOAD_FAILED: 'error.download_failed',
+  NETWORK: 'error.network',
+  GENERIC: 'error.generic'
 }
 
-function sendFairyTaleError(type: string, detail?: string): void {
-  const baseMessage = FAIRY_TALE_ERRORS[type] ?? FAIRY_TALE_ERRORS.GENERIC
+function sendLocalizedError(type: string, detail?: string): void {
+  const key = ERROR_I18N_KEYS[type] ?? ERROR_I18N_KEYS.GENERIC
+  const baseMessage = t(key as I18nKey)
   const message = detail ? `${baseMessage} (${detail})` : baseMessage
-  console.error('[Error]', message)
+  logger.error('[Error]', message)
   sendToRenderer('error', { message })
 }
 
@@ -263,8 +265,8 @@ async function startServicesInternal(): Promise<void> {
     await createAgent(agentConfig)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error('Failed to start services:', message)
-    sendFairyTaleError('SERVICE_START')
+    logger.error('Failed to start services:', message)
+    sendLocalizedError('SERVICE_START')
     throw err
   }
 }
@@ -291,6 +293,11 @@ async function recreateAgent(): Promise<void> {
 }
 
 export function registerIpcChannels(): void {
+  // Initialize i18n with Electron's system locale detection
+  // (called from app.whenReady(), so app.getLocale() is fully reliable)
+  t = createI18n(app.getLocale())
+  LLM_UNREACHABLE_HINT = process.env.LLM_UNREACHABLE_HINT || t('error.llm_unreachable')
+
   ipcMain.handle('services:start', async () => {
     await startServicesInternal()
   })
@@ -305,11 +312,11 @@ export function registerIpcChannels(): void {
   ipcMain.handle('agent:sendMessage', async (_event, text: string) => {
     const agent = getAgent()
     if (!agent) {
-      sendFairyTaleError('AGENT_NOT_READY')
+      sendLocalizedError('AGENT_NOT_READY')
       return
     }
     if (!text || text.length < 2) {
-      sendFairyTaleError('ASR_EMPTY')
+      sendLocalizedError('ASR_EMPTY')
       return
     }
 
@@ -323,7 +330,7 @@ export function registerIpcChannels(): void {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error('[agent:sendMessage] error:', message)
+      logger.error('[agent:sendMessage] error:', message)
       // Show the configured unreachable hint for all LLM errors (timeout or connection failure)
       sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
       sendToRenderer('kitten:state', 'idle')
@@ -433,11 +440,11 @@ export function registerIpcChannels(): void {
       }
     } catch (err) {
       if (abortController?.signal.aborted) {
-        console.log('Download cancelled by user')
+        logger.info('Download cancelled by user')
       } else {
         const detail = err instanceof Error ? err.message : String(err)
-        console.error('Download failed:', detail)
-        sendFairyTaleError('DOWNLOAD_FAILED', detail)
+        logger.error('Download failed:', detail)
+        sendLocalizedError('DOWNLOAD_FAILED', detail)
       }
     } finally {
       downloadInProgress = false
@@ -457,94 +464,104 @@ export function registerIpcChannels(): void {
   })
 
   // --- Recorder handlers ---
-  let recorderLock: Promise<void> | null = null
+  //
+  // Design: recorderLock only guards the VAD recording phase.
+  // Once VAD ends (naturally or by user), the lock is released immediately.
+  // The post-processing pipeline (ASR → LLM → TTS) runs as a
+  // fire-and-forget task. This prevents `recorder:stop` from blocking
+  // on the full pipeline, allowing the user to start a new recording promptly.
+  //
+  let recordingLock: Promise<void> | null = null
+
+  async function processRecordingPipeline(): Promise<void> {
+    try {
+      // If user stopped early (quick tap), the raw file may be empty or missing
+      if (getRecordingSize(RECORDING_RAW) < 100) {
+        resetRecordingState()
+        return
+      }
+
+      convertAudio(RECORDING_RAW, RECORDING_FILE)
+
+      const info = analyzeAudio(RECORDING_FILE)
+      if (info.rms < MIN_VALID_RMS || info.duration < 0.3) {
+        resetRecordingState()
+        return
+      }
+
+      // Transcribe
+      const formData = new FormData()
+      const audioBuffer = fs.readFileSync(RECORDING_FILE)
+      formData.append('file', new Blob([audioBuffer]), 'recording.wav')
+      formData.append('language', 'english')
+      formData.append('response_format', 'json')
+
+      const res = await fetch(`${asrUrl(serverConfig)}/v1/audio/transcriptions`, {
+        method: 'POST',
+        body: formData
+      })
+
+      if (!res.ok) {
+        sendLocalizedError('ASR_SERVER')
+        resetRecordingState()
+        return
+      }
+
+      const data = (await res.json()) as { text?: string }
+      const text = (data.text || '').replace(/<\/?asr_text>/g, '').trim()
+
+      if (!text || text.length < 2) {
+        sendLocalizedError('ASR_EMPTY')
+        resetRecordingState()
+        return
+      }
+
+      sendToRenderer('transcription', { text })
+
+      // Send to agent
+      const agent = getAgent()
+      if (!agent) {
+        sendLocalizedError('AGENT_NOT_READY')
+        resetRecordingState()
+        return
+      }
+
+      if (getIsSpeaking() || isAgentBusy()) {
+        stopSpeaking()
+        agent.steer({ role: 'user', content: text, timestamp: Date.now() })
+      } else {
+        await promptWithTimeout(agent, text)
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      logger.error('[recorder] pipeline error:', message)
+      sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
+      resetRecordingState()
+    }
+  }
 
   ipcMain.handle('recorder:start', async () => {
-    if (recorderLock || !servicesReady) return false
+    if (recordingLock || !servicesReady) return false
 
-    recorderLock = (async () => {
-      sendToRenderer('kitten:state', 'listening')
+    sendToRenderer('kitten:state', 'listening')
 
-      try {
-        await recordWithVad(RECORDING_RAW)
+    recordingLock = recordWithVad(RECORDING_RAW)
 
-        // If user stopped early (quick tap), the raw file may be empty or missing
-        if (getRecordingSize(RECORDING_RAW) < 100) {
-          resetRecordingState()
-          return
-        }
+    try {
+      await recordingLock
+    } finally {
+      recordingLock = null // Release lock immediately after VAD ends
+    }
 
-        convertAudio(RECORDING_RAW, RECORDING_FILE)
+    // Process ASR → LLM → TTS as fire-and-forget (non-blocking)
+    processRecordingPipeline()
 
-        const info = analyzeAudio(RECORDING_FILE)
-        if (info.rms < MIN_VALID_RMS || info.duration < 0.3) {
-          resetRecordingState()
-          return
-        }
-
-        // Transcribe
-        const formData = new FormData()
-        const audioBuffer = fs.readFileSync(RECORDING_FILE)
-        formData.append('file', new Blob([audioBuffer]), 'recording.wav')
-        formData.append('language', 'english')
-        formData.append('response_format', 'json')
-
-        const res = await fetch(`${asrUrl(serverConfig)}/v1/audio/transcriptions`, {
-          method: 'POST',
-          body: formData
-        })
-
-        if (!res.ok) {
-          sendFairyTaleError('ASR_SERVER')
-          resetRecordingState()
-          return
-        }
-
-        const data = (await res.json()) as { text?: string }
-        const text = (data.text || '').replace(/<\/?asr_text>/g, '').trim()
-
-        if (!text || text.length < 2) {
-          sendFairyTaleError('ASR_EMPTY')
-          resetRecordingState()
-          return
-        }
-
-        sendToRenderer('transcription', { text })
-
-        // Send to agent
-        const agent = getAgent()
-        if (!agent) {
-          sendFairyTaleError('AGENT_NOT_READY')
-          resetRecordingState()
-          return
-        }
-
-        if (getIsSpeaking() || isAgentBusy()) {
-          stopSpeaking()
-          agent.steer({ role: 'user', content: text, timestamp: Date.now() })
-        } else {
-          await promptWithTimeout(agent, text)
-        }
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err)
-        console.error('[recorder:start] error:', message)
-        sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
-        resetRecordingState()
-      }
-    })()
-
-    await recorderLock
-    recorderLock = null
     return true
   })
 
   ipcMain.handle('recorder:stop', async () => {
     stopRecordingProcess()
-    if (recorderLock) {
-      await recorderLock
-    } else {
-      resetRecordingState()
-    }
+    resetRecordingState()
   })
 
   // --- Config handlers ---
@@ -606,7 +623,7 @@ export function registerIpcChannels(): void {
         sendToRenderer('config:changed', updated)
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
-        console.error('[config:set] Failed to recreate agent:', message)
+        logger.error('[config:set] Failed to recreate agent:', message)
         sendToRenderer('error', { message: LLM_UNREACHABLE_HINT })
         throw new Error('Failed to reconnect to AI with new settings')
       }
